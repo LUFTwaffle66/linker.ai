@@ -1,4 +1,4 @@
-import { ClientOnboarding } from '@/features/auth/components/client-onboarding';
+import { ClientOnboarding } from '@/features/onboarding/components/client-onboarding';
 
 export default function ClientOnboardingPage() {
   return <ClientOnboarding />;

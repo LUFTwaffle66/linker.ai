@@ -18,6 +18,19 @@ export interface SignupResponse {
     companyName?: string;
   };
   token: string;
+  isNewUser?: boolean;
+}
+
+export interface LoginResponse {
+  user: {
+    id: string;
+    email: string;
+    fullName: string;
+    userType: UserType;
+    companyName?: string;
+  };
+  token: string;
+  isNewUser?: boolean;
 }
 
 export interface AuthUser {

@@ -8,9 +8,16 @@ import { Bot, Briefcase, Mail, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { useLogin } from '../api/login';
 import { type UserType } from '../types';
 import { loginSchema, type LoginFormData } from '../lib/validations';
@@ -40,7 +47,21 @@ export function Login({ onNavigate, onLogin }: LoginProps) {
       toast.success('Welcome back!');
       console.log('Login successful:', data);
       onLogin?.(activeTab);
-      router.push(paths.app.dashboard.getHref());
+
+      // Check if user needs onboarding (you can add a flag from API response)
+      // For now, redirect to onboarding if it's a new user
+      const needsOnboarding = data.isNewUser || false; // Update this based on API response
+
+      if (needsOnboarding) {
+        // Redirect to appropriate onboarding
+        if (activeTab === 'client') {
+          router.push(paths.auth.onboardingClient.getHref());
+        } else {
+          router.push(paths.auth.onboardingFreelancer.getHref());
+        }
+      } else {
+        router.push(paths.app.dashboard.getHref());
+      }
     },
     onError: (error) => {
       toast.error('Invalid email or password. Please try again.');
@@ -94,69 +115,85 @@ export function Login({ onNavigate, onLogin }: LoginProps) {
           </CardHeader>
 
           <CardContent className="space-y-6">
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="your.email@example.com"
-                    className="pl-10"
-                    {...form.register('email')}
-                  />
-                </div>
-                {form.formState.errors.email && (
-                  <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <a href="#" className="text-sm text-primary hover:underline">
-                    Forgot password?
-                  </a>
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    className="pl-10"
-                    {...form.register('password')}
-                  />
-                </div>
-                {form.formState.errors.password && (
-                  <p className="text-sm text-red-500">{form.formState.errors.password.message}</p>
-                )}
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="remember"
-                  checked={form.watch('rememberMe')}
-                  onCheckedChange={(checked) => form.setValue('rememberMe', checked as boolean)}
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email Address</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                          <Input
+                            type="email"
+                            placeholder="your.email@example.com"
+                            className="pl-10"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                <label
-                  htmlFor="remember"
-                  className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                >
-                  Remember me for 30 days
-                </label>
-              </div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
-                disabled={loginMutation.isPending}
-              >
-                {loginMutation.isPending ? 'Signing In...' : 'Sign In'}
-              </Button>
-            </form>
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Password</FormLabel>
+                        <a href="#" className="text-sm text-primary hover:underline">
+                          Forgot password?
+                        </a>
+                      </div>
+                      <FormControl>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                          <Input
+                            type="password"
+                            placeholder="Enter your password"
+                            className="pl-10"
+                            {...field}
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="rememberMe"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-x-2 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal cursor-pointer">
+                        Remember me for 30 days
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  size="lg"
+                  disabled={loginMutation.isPending}
+                >
+                  {loginMutation.isPending ? 'Signing In...' : 'Sign In'}
+                </Button>
+              </form>
+            </Form>
 
             <div className="text-center text-sm">
               <span className="text-muted-foreground">Don't have an account? </span>

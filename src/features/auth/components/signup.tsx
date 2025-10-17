@@ -8,10 +8,17 @@ import { Bot, Briefcase, CheckCircle, User, Mail, Lock, Building } from 'lucide-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { useSignup } from '../api/signup';
 import { type UserType } from '../types';
 import { signupSchema, clientSignupSchema, type SignupFormData, type ClientSignupFormData } from '../lib/validations';
@@ -45,7 +52,13 @@ export function Signup({ onNavigate, onSignup }: SignupProps) {
       toast.success('Account created successfully!');
       console.log('Signup successful:', data);
       onSignup?.(activeTab);
-      router.push(paths.app.dashboard.getHref());
+
+      // Redirect to appropriate onboarding screen
+      if (activeTab === 'client') {
+        router.push(paths.auth.onboardingClient.getHref());
+      } else {
+        router.push(paths.auth.onboardingFreelancer.getHref());
+      }
     },
     onError: (error) => {
       toast.error('Failed to create account. Please try again.');
@@ -167,132 +180,161 @@ export function Signup({ onNavigate, onSignup }: SignupProps) {
               </CardHeader>
 
               <CardContent className="space-y-6">
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="fullName">
-                        {activeTab === 'freelancer' ? 'Full Name' : 'Contact Name'} *
-                      </Label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                        <Input
-                          id="fullName"
-                          type="text"
-                          placeholder="John Doe"
-                          className="pl-10"
-                          {...form.register('fullName')}
-                        />
-                      </div>
-                      {form.formState.errors.fullName && (
-                        <p className="text-sm text-red-500">{form.formState.errors.fullName.message}</p>
-                      )}
-                    </div>
-
-                    {activeTab === 'client' && (
-                      <div className="space-y-2">
-                        <Label htmlFor="companyName">Company Name *</Label>
-                        <div className="relative">
-                          <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                          <Input
-                            id="companyName"
-                            type="text"
-                            placeholder="Your Company Inc."
-                            className="pl-10"
-                            {...form.register('companyName')}
-                          />
-                        </div>
-                        {form.formState.errors.companyName && (
-                          <p className="text-sm text-red-500">{form.formState.errors.companyName.message}</p>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="fullName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              {activeTab === 'freelancer' ? 'Full Name' : 'Contact Name'} *
+                            </FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                                <Input
+                                  type="text"
+                                  placeholder="John Doe"
+                                  className="pl-10"
+                                  {...field}
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
                         )}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address *</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="your.email@example.com"
-                        className="pl-10"
-                        {...form.register('email')}
                       />
-                    </div>
-                    {form.formState.errors.email && (
-                      <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>
-                    )}
-                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Password *</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                        <Input
-                          id="password"
-                          type="password"
-                          placeholder="Min. 8 characters"
-                          className="pl-10"
-                          {...form.register('password')}
+                      {activeTab === 'client' && (
+                        <FormField
+                          control={form.control}
+                          name="companyName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Company Name *</FormLabel>
+                              <FormControl>
+                                <div className="relative">
+                                  <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                                  <Input
+                                    type="text"
+                                    placeholder="Your Company Inc."
+                                    className="pl-10"
+                                    {...field}
+                                  />
+                                </div>
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
                         />
-                      </div>
-                      {form.formState.errors.password && (
-                        <p className="text-sm text-red-500">{form.formState.errors.password.message}</p>
                       )}
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                        <Input
-                          id="confirmPassword"
-                          type="password"
-                          placeholder="Re-enter password"
-                          className="pl-10"
-                          {...form.register('confirmPassword')}
-                        />
-                      </div>
-                      {form.formState.errors.confirmPassword && (
-                        <p className="text-sm text-red-500">{form.formState.errors.confirmPassword.message}</p>
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email Address *</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                              <Input
+                                type="email"
+                                placeholder="your.email@example.com"
+                                className="pl-10"
+                                {...field}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
                       )}
-                    </div>
-                  </div>
+                    />
 
-                  <div className="space-y-2">
-                    <div className="flex items-start space-x-2">
-                      <Checkbox
-                        id="terms"
-                        checked={form.watch('agreedToTerms')}
-                        onCheckedChange={(checked) => form.setValue('agreedToTerms', checked as boolean)}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Password *</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                                <Input
+                                  type="password"
+                                  placeholder="Min. 8 characters"
+                                  className="pl-10"
+                                  {...field}
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
                       />
-                      <label
-                        htmlFor="terms"
-                        className="text-sm leading-relaxed peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                      >
-                        I agree to the{' '}
-                        <Link href={paths.public.terms.getHref()} className="text-primary hover:underline">Terms of Service</Link>
-                        {' '}and{' '}
-                        <Link href={paths.public.privacy.getHref()} className="text-primary hover:underline">Privacy Policy</Link>
-                        . I understand that LinkerAI is not meant for collecting PII or securing sensitive data.
-                      </label>
-                    </div>
-                    {form.formState.errors.agreedToTerms && (
-                      <p className="text-sm text-red-500">{form.formState.errors.agreedToTerms.message}</p>
-                    )}
-                  </div>
 
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    size="lg"
-                    disabled={signupMutation.isPending}
-                  >
-                    {signupMutation.isPending ? 'Creating Account...' : 'Create Account'}
-                  </Button>
-                </form>
+                      <FormField
+                        control={form.control}
+                        name="confirmPassword"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Confirm Password *</FormLabel>
+                            <FormControl>
+                              <div className="relative">
+                                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                                <Input
+                                  type="password"
+                                  placeholder="Re-enter password"
+                                  className="pl-10"
+                                  {...field}
+                                />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={form.control}
+                      name="agreedToTerms"
+                      render={({ field }) => (
+                        <FormItem>
+                          <div className="flex items-start space-x-2 space-y-0">
+                            <FormControl>
+                              <Checkbox
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                              />
+                            </FormControl>
+                            <FormLabel className="text-sm leading-relaxed font-normal cursor-pointer">
+                              I agree to the{' '}
+                              <Link href={paths.public.terms.getHref()} className="text-primary hover:underline">Terms of Service</Link>
+                              {' '}and{' '}
+                              <Link href={paths.public.privacy.getHref()} className="text-primary hover:underline">Privacy Policy</Link>
+                              . I understand that LinkerAI is not meant for collecting PII or securing sensitive data.
+                            </FormLabel>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      size="lg"
+                      disabled={signupMutation.isPending}
+                    >
+                      {signupMutation.isPending ? 'Creating Account...' : 'Create Account'}
+                    </Button>
+                  </form>
+                </Form>
 
                 <div className="text-center text-sm">
                   <span className="text-muted-foreground">Already have an account? </span>
