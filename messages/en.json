@@ -1,0 +1,38 @@
+{
+  "common": {
+    "welcome": "Welcome",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "search": "Search"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?"
+  },
+  "discussions": {
+    "title": "Discussions",
+    "create": "Create Discussion",
+    "noDiscussions": "No discussions found",
+    "viewDiscussion": "View Discussion",
+    "editDiscussion": "Edit Discussion",
+    "deleteDiscussion": "Delete Discussion"
+  },
+  "users": {
+    "title": "Users",
+    "profile": "Profile",
+    "editProfile": "Edit Profile",
+    "noUsers": "No users found"
+  }
+}
