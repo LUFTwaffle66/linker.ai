@@ -224,16 +224,18 @@ export function Login({ onNavigate, onLogin }: LoginProps) {
           </CardContent>
         </Card>
 
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          By signing in, you agree to our{' '}
-          <Link href={paths.public.terms.getHref()} className="text-primary hover:underline">
-            Terms of Service
-          </Link>
-          {' '}and{' '}
-          <Link href={paths.public.privacy.getHref()} className="text-primary hover:underline">
-            Privacy Policy
-          </Link>
-        </p>
+        <div className="text-center mt-8">
+          <p className="text-xs text-muted-foreground">
+            By signing in, you agree to our{' '}
+            <Link href={paths.public.terms.getHref()} className="text-primary hover:underline">
+              Terms of Service
+            </Link>
+            {' '}and{' '}
+            <Link href={paths.public.privacy.getHref()} className="text-primary hover:underline">
+              Privacy Policy
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

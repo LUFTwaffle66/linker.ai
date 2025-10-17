@@ -19,14 +19,24 @@ interface LandingPageProps {
 export function LandingPage({ onNavigate }: LandingPageProps) {
   const router = useRouter();
 
-  const handleNavigate = (screen: string) => {
+  const handleNavigate = (screen: string, params?: { tab?: string; q?: string }) => {
     if (onNavigate) {
       onNavigate(screen);
     } else {
-      // Default navigation logic
+      // Default navigation logic with search params
       switch (screen) {
         case 'browse':
-          router.push(paths.public.browse.getHref());
+        case 'browse-projects':
+          const projectParams = new URLSearchParams();
+          projectParams.set('tab', 'projects');
+          if (params?.q) projectParams.set('q', params.q);
+          router.push(`${paths.public.browse.getHref()}?${projectParams.toString()}`);
+          break;
+        case 'browse-experts':
+          const expertParams = new URLSearchParams();
+          expertParams.set('tab', 'freelancers');
+          if (params?.q) expertParams.set('q', params.q);
+          router.push(`${paths.public.browse.getHref()}?${expertParams.toString()}`);
           break;
         default:
           router.push('/');
@@ -199,10 +209,10 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-              <Button size="lg" className="h-12 px-8" onClick={() => handleNavigate('browse')}>
+              <Button size="lg" className="h-12 px-8" onClick={() => handleNavigate('browse-experts')}>
                 Hire AI Experts
               </Button>
-              <Button variant="outline" size="lg" className="h-12 px-8" onClick={() => handleNavigate('browse')}>
+              <Button variant="outline" size="lg" className="h-12 px-8" onClick={() => handleNavigate('browse-projects')}>
                 Find Projects
               </Button>
             </div>

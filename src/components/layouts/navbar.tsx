@@ -83,7 +83,7 @@ export function Navigation({ isLoggedIn = false, userType = 'contractor' }: Navi
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(paths.public.browse.getHref());
+      router.push(paths.public.browse.getHref({ q: searchQuery }));
     }
   };
 

@@ -305,20 +305,27 @@ export function Signup({ onNavigate, onSignup }: SignupProps) {
                       name="agreedToTerms"
                       render={({ field }) => (
                         <FormItem>
-                          <div className="flex items-start space-x-2 space-y-0">
+                          <div className="flex items-start gap-3 space-y-0">
                             <FormControl>
                               <Checkbox
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
+                                className="mt-1"
                               />
                             </FormControl>
-                            <FormLabel className="text-sm leading-relaxed font-normal cursor-pointer">
-                              I agree to the{' '}
-                              <Link href={paths.public.terms.getHref()} className="text-primary hover:underline">Terms of Service</Link>
-                              {' '}and{' '}
-                              <Link href={paths.public.privacy.getHref()} className="text-primary hover:underline">Privacy Policy</Link>
-                              . I understand that LinkerAI is not meant for collecting PII or securing sensitive data.
-                            </FormLabel>
+                            <div className="flex-1">
+                              <FormLabel className="text-sm leading-relaxed font-normal cursor-pointer flex-wrap">
+                                I agree to the{' '}
+                                <Link href={paths.public.terms.getHref()} className="text-primary hover:underline">
+                                  Terms of Service
+                                </Link>
+                                {' '}and{' '}
+                                <Link href={paths.public.privacy.getHref()} className="text-primary hover:underline">
+                                  Privacy Policy
+                                </Link>
+                                . I understand that LinkerAI is not meant for collecting PII or securing sensitive data.
+                              </FormLabel>
+                            </div>
                           </div>
                           <FormMessage />
                         </FormItem>
@@ -350,10 +357,6 @@ export function Signup({ onNavigate, onSignup }: SignupProps) {
             </Card>
           </div>
         </div>
-
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          Protected by industry-standard encryption and security measures
-        </p>
       </div>
     </div>
   );

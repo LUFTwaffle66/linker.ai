@@ -22,13 +22,19 @@ export const paths = {
 
   public: {
     browse: {
-      getHref: () => '/browse',
+      getHref: (params?: { tab?: 'projects' | 'freelancers'; q?: string }) => {
+        if (!params) return '/browse';
+        const searchParams = new URLSearchParams();
+        if (params.tab) searchParams.set('tab', params.tab);
+        if (params.q) searchParams.set('q', params.q);
+        return `/browse?${searchParams.toString()}`;
+      },
     },
     findWork: {
-      getHref: () => '/find-work',
+      getHref: () => '/browse?tab=projects',
     },
     findExperts: {
-      getHref: () => '/find-experts',
+      getHref: () => '/browse?tab=freelancers',
     },
     help: {
       getHref: () => '/help',
