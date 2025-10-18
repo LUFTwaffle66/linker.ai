@@ -97,5 +97,8 @@ export const paths = {
       getHref: (projectId?: number | string) =>
         `/submit-proposal${projectId ? `?projectId=${projectId}` : ''}`,
     },
+    postProject: {
+      getHref: () => '/post-project',
+    },
   },
 } as const;
