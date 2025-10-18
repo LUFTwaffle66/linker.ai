@@ -79,7 +79,7 @@ export const paths = {
       getHref: () => '/app/profile',
     },
     messages: {
-      getHref: () => '/app/messages',
+      getHref: () => '/messages',
     },
     payments: {
       getHref: () => '/app/payments',
