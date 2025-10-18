@@ -85,7 +85,7 @@ export const paths = {
       getHref: () => '/app/payments',
     },
     settings: {
-      getHref: () => '/app/settings',
+      getHref: () => '/settings',
     },
     freelancerProfile: {
       getHref: (freelancerId: string) => `/freelancer/${freelancerId}`,
