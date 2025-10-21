@@ -23,7 +23,7 @@ import {
   Plus
 } from 'lucide-react';
 import { paths } from '@/config/paths';
-import { ShareProfileDialog } from '@/components/shared/share-profile-dialog';
+import { ShareProfileDialog } from './share-profile-dialog';
 import { EditAboutDialog } from './edit-about-dialog';
 import { EditSkillsDialog } from './edit-skills-dialog';
 import { EditPortfolioDialog } from './edit-portfolio-dialog';
