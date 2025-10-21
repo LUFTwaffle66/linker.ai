@@ -12,9 +12,10 @@ import { sendMessageSchema, type SendMessageFormData } from '../types';
 
 interface MessageInputProps {
   conversationId: string;
+  currentUserId: string;
 }
 
-export function MessageInput({ conversationId }: MessageInputProps) {
+export function MessageInput({ conversationId, currentUserId }: MessageInputProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const sendMessage = useSendMessage();
 
@@ -33,7 +34,7 @@ export function MessageInput({ conversationId }: MessageInputProps) {
     setIsSubmitting(true);
 
     try {
-      await sendMessage.mutateAsync(data);
+      await sendMessage.mutateAsync({ ...data, senderId: currentUserId });
       form.reset({ conversationId, content: '', attachments: [] });
     } catch (error) {
       console.error('Failed to send message:', error);

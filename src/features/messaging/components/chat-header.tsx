@@ -10,7 +10,6 @@ import {
 import { MoreVertical, Star, VolumeX, Volume2, AlertTriangle, Trash2, Ban } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import type { User, Conversation } from '../types';
-import { useUpdateConversationSettings, useDeleteConversation } from '../hooks';
 
 interface ChatHeaderProps {
   otherParticipant: User;
@@ -19,43 +18,11 @@ interface ChatHeaderProps {
 }
 
 export function ChatHeader({ otherParticipant, conversation, onConversationDeleted }: ChatHeaderProps) {
-  const updateSettings = useUpdateConversationSettings();
-  const deleteConversation = useDeleteConversation();
-
   const initials = otherParticipant.name
     .split(' ')
     .map((n) => n[0])
     .join('')
     .toUpperCase();
-
-  const handleToggleStar = () => {
-    updateSettings.mutate({
-      conversationId: conversation.id,
-      settings: { isStarred: !conversation.isStarred },
-    });
-  };
-
-  const handleToggleMute = () => {
-    updateSettings.mutate({
-      conversationId: conversation.id,
-      settings: { isMuted: !conversation.isMuted },
-    });
-  };
-
-  const handleBlock = () => {
-    updateSettings.mutate({
-      conversationId: conversation.id,
-      settings: { isBlocked: true },
-    });
-  };
-
-  const handleDelete = () => {
-    deleteConversation.mutate(conversation.id, {
-      onSuccess: () => {
-        onConversationDeleted();
-      },
-    });
-  };
 
   return (
     <div className="flex items-center justify-between p-4 border-b bg-background">
@@ -91,7 +58,7 @@ export function ChatHeader({ otherParticipant, conversation, onConversationDelet
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-48">
-          <DropdownMenuItem onClick={handleToggleStar}>
+          <DropdownMenuItem>
             <Star
               className={`w-4 h-4 mr-2 ${
                 conversation.isStarred ? 'fill-yellow-400 text-yellow-400' : ''
@@ -100,7 +67,7 @@ export function ChatHeader({ otherParticipant, conversation, onConversationDelet
             {conversation.isStarred ? 'Unstar' : 'Star'} Conversation
           </DropdownMenuItem>
 
-          <DropdownMenuItem onClick={handleToggleMute}>
+          <DropdownMenuItem>
             {conversation.isMuted ? (
               <>
                 <Volume2 className="w-4 h-4 mr-2" />
@@ -121,14 +88,14 @@ export function ChatHeader({ otherParticipant, conversation, onConversationDelet
             Report
           </DropdownMenuItem>
 
-          <DropdownMenuItem onClick={handleBlock} className="text-orange-600">
+          <DropdownMenuItem className="text-orange-600">
             <Ban className="w-4 h-4 mr-2" />
             Block User
           </DropdownMenuItem>
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+          <DropdownMenuItem className="text-destructive">
             <Trash2 className="w-4 h-4 mr-2" />
             Delete Conversation
           </DropdownMenuItem>

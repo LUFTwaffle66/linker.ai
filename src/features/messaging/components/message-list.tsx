@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { MessageBubble } from './message-bubble';
-import { useMessages, useMarkAsRead } from '../hooks';
+import { useMessages } from '../hooks';
 import { format, isToday, isYesterday, isSameDay } from 'date-fns';
 import type { Message } from '../types';
 
@@ -13,8 +13,7 @@ interface MessageListProps {
 }
 
 export function MessageList({ conversationId, currentUserId }: MessageListProps) {
-  const { data: messages, isLoading } = useMessages(conversationId);
-  const markAsRead = useMarkAsRead();
+  const { data: messages, isLoading } = useMessages(conversationId, currentUserId);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -23,12 +22,6 @@ export function MessageList({ conversationId, currentUserId }: MessageListProps)
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Mark messages as read when conversation is opened
-  useEffect(() => {
-    if (conversationId) {
-      markAsRead.mutate(conversationId);
-    }
-  }, [conversationId]);
 
   const getDateLabel = (date: Date): string => {
     if (isToday(date)) return 'Today';

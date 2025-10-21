@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from '@/i18n/routing';
 import {
   CheckCircle, Star, MapPin, Briefcase, MessageSquare, TrendingUp
 } from 'lucide-react';
@@ -17,6 +18,8 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useCreateOrGetConversation } from '@/features/messaging';
+import { paths } from '@/config/paths';
 import type { BrowseFreelancer } from '../types';
 import { AuthRequiredDialog } from './auth-required-dialog';
 
@@ -33,19 +36,31 @@ export function FreelancerDetailSheet({
   onOpenChange,
   onSendMessage,
 }: FreelancerDetailSheetProps) {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const isAuthenticated = status === 'authenticated';
   const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const createOrGetConversation = useCreateOrGetConversation();
 
   if (!freelancer) return null;
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!isAuthenticated) {
       setShowAuthDialog(true);
       return;
     }
-    onSendMessage?.(freelancer);
-    onOpenChange(false);
+
+    if (!session?.user?.id) return;
+
+    try {
+      const conversationId = await createOrGetConversation.mutateAsync({
+        userId1: session.user.id,
+        userId2: freelancer.user_id,
+      });
+      router.push(paths.app.messages.getHref());
+    } catch (error) {
+      console.error('Failed to create or get conversation:', error);
+    }
   };
 
   // Format hourly rate

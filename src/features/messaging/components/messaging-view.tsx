@@ -1,15 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 import { ConversationList } from './conversation-list';
 import { ChatHeader } from './chat-header';
 import { MessageList } from './message-list';
 import { MessageInput } from './message-input';
 import { EmptyState } from './empty-state';
 import type { Conversation } from '../types';
-import { CURRENT_USER_ID } from '../api/mock-data';
 
 export function MessagingView() {
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id;
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
 
   const handleConversationSelect = (conversation: Conversation) => {
@@ -22,15 +24,23 @@ export function MessagingView() {
 
   // Get the other participant (not the current user)
   const otherParticipant = activeConversation?.participants.find(
-    (p) => p.id !== CURRENT_USER_ID
+    (p) => p.id !== currentUserId
   );
+
+  if (!currentUserId) {
+    return (
+      <div className="flex h-[calc(100vh-4rem)] max-w-7xl mx-auto items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-[calc(100vh-4rem)] max-w-7xl mx-auto">
       {/* Conversation List - Left Sidebar */}
       <div className="w-80 shrink-0">
         <ConversationList
-          currentUserId={CURRENT_USER_ID}
+          currentUserId={currentUserId}
           activeConversationId={activeConversation?.id || null}
           onConversationSelect={handleConversationSelect}
         />
@@ -46,9 +56,9 @@ export function MessagingView() {
               onConversationDeleted={handleConversationDeleted}
             />
 
-            <MessageList conversationId={activeConversation.id} currentUserId={CURRENT_USER_ID} />
+            <MessageList conversationId={activeConversation.id} currentUserId={currentUserId} />
 
-            <MessageInput conversationId={activeConversation.id} />
+            <MessageInput conversationId={activeConversation.id} currentUserId={currentUserId} />
           </>
         ) : (
           <EmptyState />

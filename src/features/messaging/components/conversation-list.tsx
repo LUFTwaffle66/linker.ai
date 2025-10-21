@@ -5,7 +5,7 @@ import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ConversationItem } from './conversation-item';
-import { useConversations, useSearchConversations } from '../hooks';
+import { useConversations } from '../hooks';
 import type { Conversation } from '../types';
 
 interface ConversationListProps {
@@ -21,10 +21,12 @@ export function ConversationList({
 }: ConversationListProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const { data: conversations, isLoading } = useConversations();
-  const { data: searchResults } = useSearchConversations(searchQuery);
+  const { data: conversations, isLoading } = useConversations(currentUserId);
 
-  const displayedConversations = searchQuery ? searchResults : conversations;
+  const displayedConversations = conversations?.filter((c) => {
+    const otherParticipant = c.participants.find((p) => p.id !== currentUserId);
+    return otherParticipant?.name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   return (
     <div className="flex flex-col h-full border-r">
@@ -51,7 +53,7 @@ export function ConversationList({
           </div>
         ) : (
           <div>
-            {displayedConversations.map((conversation) => (
+            {displayedConversations.map((conversation: Conversation) => (
               <ConversationItem
                 key={conversation.id}
                 conversation={conversation}

@@ -1,196 +1,91 @@
-import type { Conversation, Message, ConversationSettings, SendMessageFormData } from '../types';
-import { MOCK_CONVERSATIONS, MOCK_MESSAGES, CURRENT_USER_ID } from './mock-data';
+import { supabase } from '@/lib/supabase';
+import type { Conversation, Message } from '../types';
 
-// Simulate API delay
-const simulateDelay = (ms: number = 500) => new Promise((resolve) => setTimeout(resolve, ms));
+type UUID = string;
 
-// API Error class
-export class ApiError extends Error {
-  constructor(public status: number, message: string) {
-    super(message);
-    this.name = 'ApiError';
-  }
+export async function getConversations(userId: string): Promise<Conversation[]> {
+  const { data: conversationIds, error: idsError } = await supabase
+    .from('conversation_participants')
+    .select('conversation_id')
+    .eq('user_id', userId);
+
+  if (idsError) throw idsError;
+
+  const { data, error } = await supabase
+    .from('conversations')
+    .select(`
+      *,
+      participants: conversation_participants!inner(
+        user: users!inner(*)
+      ),
+      lastMessage: messages!last_message_id(*)
+    `)
+    .in('id', conversationIds.map((c) => c.conversation_id))
+    .order('updated_at', { ascending: false });
+
+  if (error) throw error;
+  return data as any;
 }
 
-// In-memory storage for mock data
-let conversations = [...MOCK_CONVERSATIONS];
-let messages = [...MOCK_MESSAGES];
+export async function getMessages(conversationId: string, userId: string): Promise<Message[]> {
+  const { data, error } = await supabase
+    .from('messages')
+    .select('*, sender: users(*)')
+    .eq('conversation_id', conversationId)
+    .order('created_at', { ascending: true });
 
-/**
- * Fetch all conversations for the current user
- * @returns Promise<Conversation[]>
- */
-export const getConversations = async (): Promise<Conversation[]> => {
-  await simulateDelay();
+  if (error) throw error;
+  return data as any;
+}
 
-  // Sort by most recent first
-  return conversations.sort((a, b) =>
-    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-  );
-};
+export async function sendMessage(conversationId: string, senderId: string, content: string): Promise<Message> {
+  const { data, error } = await supabase
+    .from('messages')
+    .insert({ conversation_id: conversationId, sender_id: senderId, content })
+    .select('*, sender: users(*)')
+    .single();
 
-/**
- * Fetch a single conversation by ID
- * @param conversationId - The conversation ID
- * @returns Promise<Conversation>
- */
-export const getConversation = async (conversationId: string): Promise<Conversation> => {
-  await simulateDelay();
+  if (error) throw error;
 
-  const conversation = conversations.find((c) => c.id === conversationId);
+  await supabase
+    .from('conversations')
+    .update({ last_message_id: data.id, updated_at: new Date().toISOString() })
+    .eq('id', conversationId);
 
-  if (!conversation) {
-    throw new ApiError(404, 'Conversation not found');
+  return data as any;
+}
+
+export async function createOrGetConversation(userId1: string, userId2: string): Promise<UUID> {
+  const { data: existingConversations } = await supabase
+    .from('conversation_participants')
+    .select('conversation_id')
+    .in('user_id', [userId1, userId2]);
+
+  const conversationCounts = existingConversations?.reduce((acc, curr) => {
+    acc[curr.conversation_id] = (acc[curr.conversation_id] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const conversationId = conversationCounts && Object.keys(conversationCounts).find((id) => conversationCounts[id] > 1);
+
+  if (conversationId) {
+    return conversationId;
   }
 
-  return conversation;
-};
+  const { data: newConversation, error } = await supabase
+    .from('conversations')
+    .insert({})
+    .select('id')
+    .single();
 
-/**
- * Fetch all messages for a conversation
- * @param conversationId - The conversation ID
- * @returns Promise<Message[]>
- */
-export const getMessages = async (conversationId: string): Promise<Message[]> => {
-  await simulateDelay();
+  if (error) throw error;
 
-  const conversationMessages = messages
-    .filter((m) => m.conversationId === conversationId)
-    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  await supabase
+    .from('conversation_participants')
+    .insert([
+      { conversation_id: newConversation.id, user_id: userId1 },
+      { conversation_id: newConversation.id, user_id: userId2 },
+    ]);
 
-  if (conversationMessages.length === 0) {
-    const conversation = conversations.find((c) => c.id === conversationId);
-    if (!conversation) {
-      throw new ApiError(404, 'Conversation not found');
-    }
-  }
-
-  return conversationMessages;
-};
-
-/**
- * Send a message in a conversation
- * @param data - Message data
- * @returns Promise<Message>
- */
-export const sendMessage = async (data: SendMessageFormData): Promise<Message> => {
-  await simulateDelay(800);
-
-  const conversation = conversations.find((c) => c.id === data.conversationId);
-
-  if (!conversation) {
-    throw new ApiError(404, 'Conversation not found');
-  }
-
-  const newMessage: Message = {
-    id: `msg-${Date.now()}`,
-    conversationId: data.conversationId,
-    senderId: CURRENT_USER_ID,
-    content: data.content,
-    timestamp: new Date(),
-    read: false,
-    attachments: data.attachments,
-  };
-
-  messages.push(newMessage);
-
-  // Update conversation's last message and timestamp
-  const conversationIndex = conversations.findIndex((c) => c.id === data.conversationId);
-  conversations[conversationIndex] = {
-    ...conversation,
-    lastMessage: newMessage,
-    updatedAt: new Date(),
-  };
-
-  return newMessage;
-};
-
-/**
- * Mark messages as read
- * @param conversationId - The conversation ID
- * @returns Promise<void>
- */
-export const markAsRead = async (conversationId: string): Promise<void> => {
-  await simulateDelay(300);
-
-  // Mark all messages in this conversation as read
-  messages = messages.map((m) =>
-    m.conversationId === conversationId && m.senderId !== CURRENT_USER_ID
-      ? { ...m, read: true }
-      : m
-  );
-
-  // Update conversation's unread count
-  const conversationIndex = conversations.findIndex((c) => c.id === conversationId);
-  if (conversationIndex !== -1) {
-    conversations[conversationIndex] = {
-      ...conversations[conversationIndex],
-      unreadCount: 0,
-    };
-  }
-};
-
-/**
- * Update conversation settings
- * @param conversationId - The conversation ID
- * @param settings - Settings to update
- * @returns Promise<Conversation>
- */
-export const updateConversationSettings = async (
-  conversationId: string,
-  settings: Partial<ConversationSettings>
-): Promise<Conversation> => {
-  await simulateDelay(500);
-
-  const conversationIndex = conversations.findIndex((c) => c.id === conversationId);
-
-  if (conversationIndex === -1) {
-    throw new ApiError(404, 'Conversation not found');
-  }
-
-  conversations[conversationIndex] = {
-    ...conversations[conversationIndex],
-    ...settings,
-  };
-
-  return conversations[conversationIndex];
-};
-
-/**
- * Delete a conversation
- * @param conversationId - The conversation ID
- * @returns Promise<void>
- */
-export const deleteConversation = async (conversationId: string): Promise<void> => {
-  await simulateDelay(500);
-
-  const conversationIndex = conversations.findIndex((c) => c.id === conversationId);
-
-  if (conversationIndex === -1) {
-    throw new ApiError(404, 'Conversation not found');
-  }
-
-  // Remove conversation and all its messages
-  conversations = conversations.filter((c) => c.id !== conversationId);
-  messages = messages.filter((m) => m.conversationId !== conversationId);
-};
-
-/**
- * Search conversations
- * @param query - Search query
- * @returns Promise<Conversation[]>
- */
-export const searchConversations = async (query: string): Promise<Conversation[]> => {
-  await simulateDelay(400);
-
-  if (!query.trim()) {
-    return conversations;
-  }
-
-  const lowerQuery = query.toLowerCase();
-
-  return conversations.filter((c) =>
-    c.participants.some((p) => p.name.toLowerCase().includes(lowerQuery)) ||
-    c.lastMessage.content.toLowerCase().includes(lowerQuery)
-  );
-};
+  return newConversation.id;
+}

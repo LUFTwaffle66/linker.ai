@@ -12,13 +12,9 @@ export { EmptyState } from './components/empty-state';
 // Hooks
 export {
   useConversations,
-  useConversation,
-  useUpdateConversationSettings,
-  useDeleteConversation,
-  useSearchConversations,
   useMessages,
   useSendMessage,
-  useMarkAsRead,
+  useCreateOrGetConversation,
   messagingKeys,
 } from './hooks';
 
