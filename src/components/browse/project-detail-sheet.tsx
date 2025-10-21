@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Project } from '@/types/browse';
+import { type Project } from '@/types/browse';
 import { AuthRequiredDialog } from './auth-required-dialog';
 
 interface ProjectDetailSheetProps {

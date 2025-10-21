@@ -4,7 +4,7 @@ import { Star, MapPin, Briefcase, CheckCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Expert } from '@/types/browse';
+import { type Expert } from '@/types/browse';
 import { cn } from '@/lib/utils';
 
 interface FreelancerCardProps {

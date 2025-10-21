@@ -60,7 +60,7 @@ export function FreelancerOnboarding({ onComplete, onSkip }: FreelancerOnboardin
   const totalSteps = 5;
 
   const form = useForm<FreelancerOnboardingData>({
-    resolver: zodResolver(freelancerOnboardingSchema),
+    resolver: zodResolver(freelancerOnboardingSchema) as any,
     defaultValues: {
       profileImage: '',
       fullName: '',

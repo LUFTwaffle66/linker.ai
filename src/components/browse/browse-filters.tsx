@@ -58,8 +58,8 @@ export function BrowseFilters({ activeTab }: BrowseFiltersProps) {
               className="w-full"
             />
             <div className="flex justify-between text-sm text-muted-foreground mt-2">
-              <span>${budgetRange[0].toLocaleString()}</span>
-              <span>${budgetRange[1].toLocaleString()}+</span>
+              <span>${(budgetRange[0] as any).toLocaleString()}</span>
+              <span>${((budgetRange[1] ?? 0) as any).toLocaleString()}+</span>
             </div>
           </div>
         </div>

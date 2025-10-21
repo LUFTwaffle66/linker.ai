@@ -4,7 +4,7 @@ import { DollarSign, Clock, Calendar, Star, CheckCircle, Heart } from 'lucide-re
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Project } from '@/types/browse';
+import { type Project } from '@/types/browse';
 import { cn } from '@/lib/utils';
 
 interface ProjectCardProps {
