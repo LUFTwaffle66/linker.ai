@@ -26,7 +26,7 @@ export function MessagingView() {
   );
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-background">
+    <div className="flex h-[calc(100vh-4rem)] max-w-7xl mx-auto">
       {/* Conversation List - Left Sidebar */}
       <div className="w-80 shrink-0">
         <ConversationList

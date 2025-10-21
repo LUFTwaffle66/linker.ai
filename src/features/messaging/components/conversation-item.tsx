@@ -62,8 +62,8 @@ export function ConversationItem({
         </div>
 
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm text-muted-foreground truncate">
-            {conversation.lastMessage.senderId === currentUserId && 'You: '}
+          <p className="flex-1 text-sm text-muted-foreground truncate">
+            {conversation.lastMessage.senderId === currentUserId && <span className="font-medium">You: </span>}
             {conversation.lastMessage.content}
           </p>
           {conversation.unreadCount > 0 && (
