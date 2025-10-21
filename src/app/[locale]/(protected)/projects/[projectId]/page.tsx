@@ -6,6 +6,6 @@ interface ProjectPageProps {
   };
 }
 
-export default function ProjectPage({ params }: ProjectPageProps) {
-  return <ActiveProjectView projectId={params.projectId} />;
+export default function ProjectPage({ params }: any) {
+  return <ActiveProjectView projectId={params?.projectId} />;
 }
