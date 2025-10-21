@@ -19,7 +19,7 @@ import {
   Share2
 } from 'lucide-react';
 import { paths } from '@/config/paths';
-import { ShareProfileDialog } from '@/components/shared/share-profile-dialog';
+import { ShareProfileDialog } from './share-profile-dialog';
 import type { ClientProfileData } from '../types';
 
 interface ClientProfileProps {
