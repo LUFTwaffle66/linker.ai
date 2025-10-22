@@ -69,20 +69,6 @@
       }
     }
   },
-  "discussions": {
-    "title": "Discussions",
-    "create": "Créer une discussion",
-    "noDiscussions": "Aucune discussion trouvée",
-    "viewDiscussion": "Voir la discussion",
-    "editDiscussion": "Modifier la discussion",
-    "deleteDiscussion": "Supprimer la discussion"
-  },
-  "users": {
-    "title": "Utilisateurs",
-    "profile": "Profil",
-    "editProfile": "Modifier le profil",
-    "noUsers": "Aucun utilisateur trouvé"
-  },
   "notFound": {
     "title": "Page Non Trouvée",
     "subtitle": "Oups! La page que vous recherchez n'existe pas ou a été déplacée.",

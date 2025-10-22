@@ -4,15 +4,12 @@ import { useState } from 'react';
 import { useRouter } from '@/i18n/routing';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
 import {
-  Sparkles, User, Award, Briefcase, DollarSign, Upload, MapPin, Clock, CheckCircle2, Plus, X, ExternalLink
+  Sparkles, User, Award, Briefcase, DollarSign, MapPin, Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
   Form,
   FormControl,
@@ -28,7 +25,10 @@ import {
   freelancerOnboardingSchema,
   type FreelancerOnboardingData,
 } from '../lib/validations';
-import { saveFreelancerOnboarding } from '../api/onboarding';
+import { useSaveFreelancerOnboarding } from '../hooks';
+import { ProfileImageUploader } from './profile-image-uploader';
+import { SkillsSelector } from './skills-selector';
+import { PortfolioManager, type PortfolioItem } from './portfolio-manager';
 
 interface FreelancerOnboardingProps {
   onComplete?: () => void;
@@ -77,8 +77,7 @@ export function FreelancerOnboarding({ onComplete, onSkip }: FreelancerOnboardin
     },
   });
 
-  const mutation = useMutation({
-    mutationFn: saveFreelancerOnboarding,
+  const saveMutation = useSaveFreelancerOnboarding({
     onSuccess: () => {
       toast.success('Profile created successfully! Welcome to LinkerAI');
       if (onComplete) {
@@ -202,7 +201,7 @@ export function FreelancerOnboarding({ onComplete, onSkip }: FreelancerOnboardin
   };
 
   const handleComplete = form.handleSubmit((data) => {
-    mutation.mutate(data);
+    saveMutation.mutate(data);
   });
 
   const handleSkip = () => {
@@ -236,18 +235,10 @@ export function FreelancerOnboarding({ onComplete, onSkip }: FreelancerOnboardin
               </p>
             </div>
 
-            <div className="flex flex-col items-center gap-4">
-              <Avatar className="w-24 h-24">
-                <AvatarImage src={form.watch('profileImage')} />
-                <AvatarFallback className="bg-primary/10 text-primary">
-                  <User className="w-10 h-10" />
-                </AvatarFallback>
-              </Avatar>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Upload className="w-4 h-4" />
-                Upload Photo
-              </Button>
-            </div>
+            <ProfileImageUploader
+              imageUrl={form.watch('profileImage')}
+              onImageChange={(url) => form.setValue('profileImage', url)}
+            />
 
             <div className="space-y-4">
               <FormField
@@ -386,48 +377,16 @@ export function FreelancerOnboarding({ onComplete, onSkip }: FreelancerOnboardin
               name="skills"
               render={() => (
                 <FormItem>
-                  <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
-                    <p className="text-sm font-medium mb-2">
-                      {skills.length} of 15 skills selected
-                    </p>
-                    {skills.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {skills.map(skill => (
-                          <Badge
-                            key={skill}
-                            variant="default"
-                            className="cursor-pointer"
-                            onClick={() => toggleSkill(skill)}
-                          >
-                            {skill} ×
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <SkillsSelector
+                    availableSkills={aiSkills}
+                    selectedSkills={skills}
+                    onSkillsChange={(newSkills) => form.setValue('skills', newSkills)}
+                    maxSkills={15}
+                  />
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            <div>
-              <h4 className="mb-3">Available Skills</h4>
-              <div className="flex flex-wrap gap-2 max-h-96 overflow-y-auto p-1">
-                {aiSkills.map(skill => (
-                  <Badge
-                    key={skill}
-                    variant={skills.includes(skill) ? 'default' : 'outline'}
-                    className="cursor-pointer hover:bg-primary/10 transition-colors"
-                    onClick={() => toggleSkill(skill)}
-                  >
-                    {skills.includes(skill) && (
-                      <CheckCircle2 className="w-3 h-3 mr-1" />
-                    )}
-                    {skill}
-                  </Badge>
-                ))}
-              </div>
-            </div>
 
             <div className="bg-muted/50 p-4 rounded-lg">
               <p className="text-sm text-muted-foreground">
@@ -447,131 +406,10 @@ export function FreelancerOnboarding({ onComplete, onSkip }: FreelancerOnboardin
               </p>
             </div>
 
-            {/* Display added portfolio items */}
-            {portfolio.length > 0 && (
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium">Added Portfolio Items ({portfolio.length})</h3>
-                {portfolio.map((item, index) => (
-                  <div key={index} className="border rounded-lg p-4 bg-card">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <h4 className="font-medium mb-1">{item.title}</h4>
-                        <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
-                          {item.description}
-                        </p>
-                        <div className="flex flex-wrap gap-1">
-                          {item.tags.map((tag) => (
-                            <Badge key={tag} variant="secondary" className="text-xs">
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                        {item.url && (
-                          <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                            <ExternalLink className="w-3 h-3" />
-                            <span className="truncate max-w-xs">{item.url}</span>
-                          </div>
-                        )}
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => removePortfolioItem(index)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Add new portfolio item form */}
-            <div className="border-2 border-dashed rounded-lg p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium">
-                  {portfolio.length === 0 ? 'Add Your First Portfolio Item' : 'Add Another Portfolio Item'}
-                </h3>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Project Title *</label>
-                  <Input
-                    placeholder="e.g., AI Chatbot for Customer Support"
-                    value={currentPortfolioItem.title}
-                    onChange={(e) => setCurrentPortfolioItem({
-                      ...currentPortfolioItem,
-                      title: e.target.value,
-                    })}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Project Description *</label>
-                  <Textarea
-                    placeholder="Describe the project, technologies used, and results achieved..."
-                    rows={3}
-                    className="resize-none"
-                    value={currentPortfolioItem.description}
-                    onChange={(e) => setCurrentPortfolioItem({
-                      ...currentPortfolioItem,
-                      description: e.target.value,
-                    })}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Project URL (optional)</label>
-                  <Input
-                    placeholder="https://your-project-demo.com"
-                    value={currentPortfolioItem.url}
-                    onChange={(e) => setCurrentPortfolioItem({
-                      ...currentPortfolioItem,
-                      url: e.target.value,
-                    })}
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Technologies Used *</label>
-                  <div className="flex flex-wrap gap-2">
-                    {['Python', 'TensorFlow', 'OpenAI API', 'React', 'Docker', 'AWS', 'Node.js', 'PyTorch', 'LangChain'].map(tag => (
-                      <Badge
-                        key={tag}
-                        variant={currentPortfolioItem.tags.includes(tag) ? 'default' : 'outline'}
-                        className="cursor-pointer"
-                        onClick={() => togglePortfolioTag(tag)}
-                      >
-                        {currentPortfolioItem.tags.includes(tag) && <CheckCircle2 className="w-3 h-3 mr-1" />}
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                <Button
-                  type="button"
-                  onClick={addPortfolioItem}
-                  className="w-full"
-                  variant={portfolio.length > 0 ? 'outline' : 'default'}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Portfolio Item
-                </Button>
-              </div>
-            </div>
-
-            <div className="bg-muted/50 p-4 rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                {portfolio.length === 0
-                  ? 'You can skip this step and add portfolio items later from your profile settings.'
-                  : 'You can add more portfolio items later from your profile settings.'
-                }
-              </p>
-            </div>
+            <PortfolioManager
+              portfolio={portfolio}
+              onPortfolioChange={(newPortfolio) => form.setValue('portfolio', newPortfolio)}
+            />
           </div>
         )}
 

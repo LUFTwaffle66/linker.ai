@@ -4,15 +4,13 @@ import { useState } from 'react';
 import { useRouter } from '@/i18n/routing';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
 import {
-  Sparkles, User, Building2, Target, DollarSign, Upload, Globe, Users
+  Sparkles, Building2, Target, DollarSign, Globe, Users
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Form,
@@ -29,7 +27,8 @@ import {
   clientOnboardingSchema,
   type ClientOnboardingData,
 } from '../lib/validations';
-import { saveClientOnboarding } from '../api/onboarding';
+import { useSaveClientOnboarding } from '../hooks';
+import { ProfileImageUploader } from './profile-image-uploader';
 
 interface ClientOnboardingProps {
   onComplete?: () => void;
@@ -37,7 +36,7 @@ interface ClientOnboardingProps {
 }
 
 const steps: Step[] = [
-  { num: 1, label: 'Profile', icon: User },
+  { num: 1, label: 'Profile', icon: Building2 },
   { num: 2, label: 'Company', icon: Building2 },
   { num: 3, label: 'Goals', icon: Target },
   { num: 4, label: 'Budget', icon: DollarSign },
@@ -92,8 +91,7 @@ export function ClientOnboarding({ onComplete, onSkip }: ClientOnboardingProps) 
     },
   });
 
-  const mutation = useMutation({
-    mutationFn: saveClientOnboarding,
+  const saveMutation = useSaveClientOnboarding({
     onSuccess: () => {
       toast.success('Profile created successfully! Welcome to LinkerAI');
       if (onComplete) {
@@ -156,7 +154,7 @@ export function ClientOnboarding({ onComplete, onSkip }: ClientOnboardingProps) 
   };
 
   const handleComplete = form.handleSubmit((data) => {
-    mutation.mutate(data);
+    saveMutation.mutate(data);
   });
 
   const handleSkip = () => {
@@ -190,18 +188,10 @@ export function ClientOnboarding({ onComplete, onSkip }: ClientOnboardingProps) 
               </p>
             </div>
 
-            <div className="flex flex-col items-center gap-4">
-              <Avatar className="w-24 h-24">
-                <AvatarImage src={form.watch('profileImage')} />
-                <AvatarFallback className="bg-primary/10 text-primary">
-                  <User className="w-10 h-10" />
-                </AvatarFallback>
-              </Avatar>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Upload className="w-4 h-4" />
-                Upload Photo
-              </Button>
-            </div>
+            <ProfileImageUploader
+              imageUrl={form.watch('profileImage')}
+              onImageChange={(url) => form.setValue('profileImage', url)}
+            />
 
             <div className="space-y-4">
               <FormField

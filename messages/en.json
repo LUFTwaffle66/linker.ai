@@ -69,20 +69,6 @@
       }
     }
   },
-  "discussions": {
-    "title": "Discussions",
-    "create": "Create Discussion",
-    "noDiscussions": "No discussions found",
-    "viewDiscussion": "View Discussion",
-    "editDiscussion": "Edit Discussion",
-    "deleteDiscussion": "Delete Discussion"
-  },
-  "users": {
-    "title": "Users",
-    "profile": "Profile",
-    "editProfile": "Edit Profile",
-    "noUsers": "No users found"
-  },
   "notFound": {
     "title": "Page Not Found",
     "subtitle": "Oops! The page you're looking for doesn't exist or has been moved.",
