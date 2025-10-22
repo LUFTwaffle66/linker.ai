@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { signIn } from 'next-auth/react';
+import { supabase } from '@/lib/supabase';
 
 export interface LoginDTO {
   email: string;
@@ -7,17 +7,16 @@ export interface LoginDTO {
 }
 
 export const login = async (data: LoginDTO) => {
-  const result = await signIn('credentials', {
+  const { data: authData, error } = await supabase.auth.signInWithPassword({
     email: data.email,
     password: data.password,
-    redirect: false,
   });
 
-  if (result?.error) {
-    throw new Error(result.error);
+  if (error) {
+    throw new Error(error.message);
   }
 
-  return result;
+  return authData;
 };
 
 type UseLoginOptions = {

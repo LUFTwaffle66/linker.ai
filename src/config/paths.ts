@@ -81,6 +81,9 @@ export const paths = {
     messages: {
       getHref: () => '/messages',
     },
+    notifications: {
+      getHref: () => '/notifications',
+    },
     payments: {
       getHref: () => '/payments',
     },

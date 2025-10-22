@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/server/auth';
+import { getRouteHandlerUser } from '@/lib/supabase/route-handler';
 import {
   createClientProfile,
   updateClientProfile,
@@ -10,8 +10,8 @@ import { clientOnboardingSchema } from '@/features/onboarding/lib/validations';
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await auth();
-    if (!session?.user) {
+    const user = await getRouteHandlerUser();
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user is a client
-    if (session.user.role !== 'client') {
+    if (user.role !== 'client') {
       return NextResponse.json(
         { error: 'Only clients can create client profiles' },
         { status: 403 }
@@ -43,15 +43,15 @@ export async function POST(request: NextRequest) {
     const data = validationResult.data;
 
     // Check if profile already exists
-    const existingProfile = await getClientProfile(session.user.id);
+    const existingProfile = await getClientProfile(user.id);
 
     let profile;
     if (existingProfile) {
       // Update existing profile
-      profile = await updateClientProfile(session.user.id, data);
+      profile = await updateClientProfile(user.id, data);
     } else {
       // Create new profile
-      profile = await createClientProfile(session.user.id, data);
+      profile = await createClientProfile(user.id, data);
     }
 
     return NextResponse.json(
@@ -76,8 +76,8 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     // Check authentication
-    const session = await auth();
-    if (!session?.user) {
+    const user = await getRouteHandlerUser();
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -85,14 +85,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify user is a client
-    if (session.user.role !== 'client') {
+    if (user.role !== 'client') {
       return NextResponse.json(
         { error: 'Only clients can access client profiles' },
         { status: 403 }
       );
     }
 
-    const profile = await getClientProfile(session.user.id);
+    const profile = await getClientProfile(user.id);
 
     if (!profile) {
       return NextResponse.json(

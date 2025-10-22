@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from '@/i18n/routing';
+import { useAuth } from '@/features/auth/lib/auth-client';import { useRouter } from '@/i18n/routing';
 import {
   CheckCircle, Star, MapPin, Briefcase, MessageSquare, TrendingUp
 } from 'lucide-react';
@@ -36,9 +35,8 @@ export function FreelancerDetailSheet({
   onOpenChange,
   onSendMessage,
 }: FreelancerDetailSheetProps) {
-  const { data: session, status } = useSession();
+  const { isAuthenticated, user } = useAuth();
   const router = useRouter();
-  const isAuthenticated = status === 'authenticated';
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const createOrGetConversation = useCreateOrGetConversation();
 
@@ -50,11 +48,11 @@ export function FreelancerDetailSheet({
       return;
     }
 
-    if (!session?.user?.id) return;
+    if (!user?.id) return;
 
     try {
       const conversationId = await createOrGetConversation.mutateAsync({
-        userId1: session.user.id,
+        userId1: user.id,
         userId2: freelancer.user_id,
       });
       router.push(paths.app.messages.getHref());

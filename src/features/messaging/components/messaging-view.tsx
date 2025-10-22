@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/features/auth/lib/auth-client';
 import { ConversationList } from './conversation-list';
 import { ChatHeader } from './chat-header';
 import { MessageList } from './message-list';
@@ -10,8 +10,8 @@ import { EmptyState } from './empty-state';
 import type { Conversation } from '../types';
 
 export function MessagingView() {
-  const { data: session } = useSession();
-  const currentUserId = session?.user?.id;
+  const { user } = useAuth();
+  const currentUserId = user?.id;
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
 
   const handleConversationSelect = (conversation: Conversation) => {

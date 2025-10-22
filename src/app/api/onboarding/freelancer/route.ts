@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/server/auth';
+import { getRouteHandlerUser } from '@/lib/supabase/route-handler';
 import {
   createFreelancerProfile,
   updateFreelancerProfile,
@@ -10,8 +10,8 @@ import { freelancerOnboardingSchema } from '@/features/onboarding/lib/validation
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await auth();
-    if (!session?.user) {
+    const user = await getRouteHandlerUser();
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify user is a freelancer
-    if (session.user.role !== 'freelancer') {
+    if (user.role !== 'freelancer') {
       return NextResponse.json(
         { error: 'Only freelancers can create freelancer profiles' },
         { status: 403 }
@@ -43,15 +43,15 @@ export async function POST(request: NextRequest) {
     const data = validationResult.data;
 
     // Check if profile already exists
-    const existingProfile = await getFreelancerProfile(session.user.id);
+    const existingProfile = await getFreelancerProfile(user.id);
 
     let profile;
     if (existingProfile) {
       // Update existing profile
-      profile = await updateFreelancerProfile(session.user.id, data);
+      profile = await updateFreelancerProfile(user.id, data);
     } else {
       // Create new profile
-      profile = await createFreelancerProfile(session.user.id, data);
+      profile = await createFreelancerProfile(user.id, data);
     }
 
     return NextResponse.json(
@@ -76,8 +76,8 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     // Check authentication
-    const session = await auth();
-    if (!session?.user) {
+    const user = await getRouteHandlerUser();
+    if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -85,14 +85,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Verify user is a freelancer
-    if (session.user.role !== 'freelancer') {
+    if (user.role !== 'freelancer') {
       return NextResponse.json(
         { error: 'Only freelancers can access freelancer profiles' },
         { status: 403 }
       );
     }
 
-    const profile = await getFreelancerProfile(session.user.id);
+    const profile = await getFreelancerProfile(user.id);
 
     if (!profile) {
       return NextResponse.json(

@@ -1,11 +1,10 @@
-import { auth } from '@/server/auth';
+import { getServerUser } from '@/features/auth/lib/auth-server';
 import { ClientPayments, FreelancerPayments } from '@/features/payment';
 import { redirect } from 'next/navigation';
 import { paths } from '@/config/paths';
 
 export default async function PaymentsPage() {
-  const session = await auth();
-  const user = session?.user;
+  const user = await getServerUser();
 
   if (!user) {
     redirect(paths.auth.login.getHref());

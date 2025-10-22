@@ -1,6 +1,6 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/features/auth/lib/auth-client';
 import { useRouter } from '@/i18n/routing';
 import { HelpCircle, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,8 +15,8 @@ import { MobileMenu } from './mobile-menu';
 
 export function Navigation() {
   const router = useRouter();
-  const { status } = useSession();
-  const isLoggedIn = status === 'authenticated';
+  const { isAuthenticated } = useAuth();
+  const isLoggedIn = isAuthenticated;
 
   return (
     <nav className="border-b border-border bg-background sticky top-0 z-50">

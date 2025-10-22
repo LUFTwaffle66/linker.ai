@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/features/auth/lib/auth-client';
 import { useRouter } from 'next/navigation';
 import type { UserRole } from '@/features/auth/types/auth';
 
@@ -12,29 +12,29 @@ interface AuthGuardProps {
 }
 
 export function AuthGuard({ children, requireRole, fallbackUrl = '/login' }: AuthGuardProps) {
-  const { data: session, status } = useSession();
+  const { user, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (isLoading) return;
 
     // Not authenticated - redirect to login
-    if (!session) {
+    if (!isAuthenticated) {
       router.push(fallbackUrl);
       return;
     }
 
     // Check role if required
-    if (requireRole) {
+    if (requireRole && user) {
       const allowedRoles = Array.isArray(requireRole) ? requireRole : [requireRole];
-      if (!allowedRoles.includes(session.user.role)) {
+      if (!allowedRoles.includes(user.role)) {
         router.push('/403'); // Forbidden page
       }
     }
-  }, [session, status, requireRole, fallbackUrl, router]);
+  }, [user, isLoading, isAuthenticated, requireRole, fallbackUrl, router]);
 
   // Show loading state
-  if (status === 'loading') {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -43,14 +43,14 @@ export function AuthGuard({ children, requireRole, fallbackUrl = '/login' }: Aut
   }
 
   // Not authenticated
-  if (!session) {
+  if (!isAuthenticated) {
     return null;
   }
 
   // Check role
-  if (requireRole) {
+  if (requireRole && user) {
     const allowedRoles = Array.isArray(requireRole) ? requireRole : [requireRole];
-    if (!allowedRoles.includes(session.user.role)) {
+    if (!allowedRoles.includes(user.role)) {
       return null;
     }
   }

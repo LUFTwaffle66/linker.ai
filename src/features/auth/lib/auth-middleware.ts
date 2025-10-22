@@ -1,31 +1,30 @@
-import { auth } from '@/server/auth';
+import { getServerUser } from './auth-server';
 import type { UserRole } from '../types/auth';
 
 /**
  * Get current user from session
  */
 export async function getCurrentUser() {
-  const session = await auth();
-  return session?.user || null;
+  return await getServerUser();
 }
 
 /**
  * Check if current user is authenticated
  */
 export async function requireAuth(): Promise<boolean> {
-  const session = await auth();
-  return !!session?.user;
+  const user = await getServerUser();
+  return !!user;
 }
 
 /**
  * Check if the current user has a specific role
  */
 export async function requireRole(role: UserRole | UserRole[]): Promise<boolean> {
-  const session = await auth();
-  if (!session?.user) return false;
+  const user = await getServerUser();
+  if (!user) return false;
 
   const allowedRoles = Array.isArray(role) ? role : [role];
-  return allowedRoles.includes(session.user.role);
+  return allowedRoles.includes(user.role);
 }
 
 /**

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTheme } from 'next-themes';
 import { useRouter } from '@/i18n/routing';
-import { useSession, signOut } from 'next-auth/react';
+import { useAuth } from '@/features/auth/lib/auth-client';
 import {
   Menu,
   User,
@@ -29,12 +29,11 @@ import { paths } from '@/config/paths';
 
 export function MobileMenu() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { user, isAuthenticated, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const [onlineForMessages, setOnlineForMessages] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const isLoggedIn = status === 'authenticated' && !!session?.user;
-  const user = session?.user;
+  const isLoggedIn = isAuthenticated && !!user;
 
   // Helper function to get user initials
   const getUserInitials = () => {
@@ -55,7 +54,7 @@ export function MobileMenu() {
   };
 
   const handleLogout = async () => {
-    await signOut({ redirect: true, callbackUrl: paths.auth.login.getHref() });
+    await logout();
   };
 
   return (

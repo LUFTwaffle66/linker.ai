@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter, Link } from '@/i18n/routing';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { signIn } from 'next-auth/react';
 import { Bot, Briefcase, CheckCircle, User, Mail, Lock, Building } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,24 +48,12 @@ export function Signup({ onNavigate, onSignup }: SignupProps) {
   });
 
   const signupMutation = useSignup({
-    onSuccess: async (data: any, variables: SignupDTO) => {
-      toast.success('Account created successfully!');
+    onSuccess: async (data: any) => {
+      toast.success('Account created successfully! Please check your email to verify your account.');
       console.log('Signup successful:', data);
       onSignup?.(activeTab);
 
-      // Automatically sign in the user after successful signup
-      const signInResult = await signIn('credentials', {
-        email: variables.email,
-        password: variables.password,
-        redirect: false,
-      });
-
-      if (signInResult?.error) {
-        toast.error('Account created but login failed. Please login manually.');
-        router.push(paths.auth.login.getHref());
-        return;
-      }
-
+      // Supabase Auth automatically signs in the user after signup
       // Redirect to appropriate onboarding screen
       if (activeTab === 'client') {
         router.push(paths.auth.onboardingClient.getHref());

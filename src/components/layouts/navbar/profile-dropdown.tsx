@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTheme } from 'next-themes';
 import { useRouter } from '@/i18n/routing';
-import { useSession, signOut } from 'next-auth/react';
+import { useAuth } from '@/features/auth/lib/auth-client';
 import { User, Wallet, Settings, LogOut, Moon } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
@@ -18,10 +18,9 @@ import { paths } from '@/config/paths';
 
 export function ProfileDropdown() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const [onlineForMessages, setOnlineForMessages] = useState(true);
-  const user = session?.user;
 
   // Helper function to get user initials
   const getUserInitials = () => {
@@ -42,7 +41,7 @@ export function ProfileDropdown() {
   };
 
   const handleLogout = async () => {
-    await signOut({ redirect: true, callbackUrl: paths.auth.login.getHref() });
+    await logout();
   };
 
   return (

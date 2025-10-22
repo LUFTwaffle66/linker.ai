@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { formatDistanceToNow } from 'date-fns';
+import { useAuth } from '@/features/auth/lib/auth-client';import { formatDistanceToNow } from 'date-fns';
 import {
   Globe, DollarSign, Clock, User, FileText, CheckCircle, Star, MapPin
 } from 'lucide-react';
@@ -34,8 +33,7 @@ export function ProjectDetailSheet({
   onOpenChange,
   onSubmitProposal,
 }: ProjectDetailSheetProps) {
-  const { status } = useSession();
-  const isAuthenticated = status === 'authenticated';
+  const { isAuthenticated } = useAuth();
   const [showAuthDialog, setShowAuthDialog] = useState(false);
 
   if (!project) return null;
