@@ -2,6 +2,7 @@
 
 import { Link } from '@/i18n/routing';
 import { paths } from '@/config/paths';
+import Image from 'next/image';
 
 export function Footer() {
   return (
@@ -12,8 +13,15 @@ export function Footer() {
           {/* Brand Section - Larger */}
           <div className="md:col-span-5">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-                <span className="text-primary-foreground text-xl font-bold">L</span>
+              {/* LOGO */}
+              <div className="w-12 h-12 rounded-xl overflow-hidden shadow-lg shadow-primary/20">
+                <Image
+                  src="/logo.jpeg"
+                  alt="LinkerAI"
+                  width={48}
+                  height={48}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div>
                 <span className="text-2xl font-semibold font-serif">LinkerAI</span>

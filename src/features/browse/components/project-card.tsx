@@ -11,15 +11,10 @@ import type { BrowseProject } from '../types';
 interface ProjectCardProps {
   project: BrowseProject;
   onClick?: (project: BrowseProject) => void;
-  onSave?: (project: BrowseProject) => void;
   className?: string;
 }
 
-export function ProjectCard({ project, onClick, onSave, className }: ProjectCardProps) {
-  const handleSaveClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onSave?.(project);
-  };
+export function ProjectCard({ project, onClick, className }: ProjectCardProps) {
 
   // Format budget
   const formattedBudget = new Intl.NumberFormat('en-US', {
@@ -58,9 +53,6 @@ export function ProjectCard({ project, onClick, onSave, className }: ProjectCard
             )}
           </div>
           <Heart
-            className="w-5 h-5 text-muted-foreground hover:text-red-500 transition-colors cursor-pointer flex-shrink-0 ml-2"
-            onClick={handleSaveClick}
-          />
         </div>
 
         <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mb-3">
