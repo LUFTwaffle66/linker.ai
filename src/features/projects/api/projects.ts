@@ -294,6 +294,28 @@ export async function inviteFreelancers(projectId: string, freelancerIds: string
 }
 
 /**
+ * Fetch projects where user is hired freelancer
+ */
+export async function fetchFreelancerProjects(freelancerId: string) {
+  const { data, error } = await supabase
+    .from('projects')
+    .select(`
+      *,
+      client:users!projects_client_id_fkey(
+        id,
+        full_name,
+        company_name,
+        avatar_url
+      )
+    `)
+    .eq('hired_freelancer_id', freelancerId)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data as ProjectWithClient[];
+}
+
+/**
  * Search projects by skills and category
  */
 export async function searchProjects(params: {

@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import {
   fetchPublishedProjects,
   fetchClientProjects,
+  fetchFreelancerProjects,
   fetchProjectById,
   createProject,
   updateProject,
@@ -26,6 +27,7 @@ export const projectKeys = {
   details: () => [...projectKeys.all, 'detail'] as const,
   detail: (id: string) => [...projectKeys.details(), id] as const,
   client: (clientId: string) => [...projectKeys.all, 'client', clientId] as const,
+  freelancer: (freelancerId: string) => [...projectKeys.all, 'freelancer', freelancerId] as const,
   search: (params: Record<string, any>) => [...projectKeys.all, 'search', params] as const,
 };
 
@@ -47,6 +49,17 @@ export function useClientProjects(clientId: string) {
     queryKey: projectKeys.client(clientId),
     queryFn: () => fetchClientProjects(clientId),
     enabled: !!clientId,
+  });
+}
+
+/**
+ * Fetch projects where user is hired freelancer
+ */
+export function useFreelancerProjects(freelancerId?: string) {
+  return useQuery({
+    queryKey: projectKeys.freelancer(freelancerId || ''),
+    queryFn: () => fetchFreelancerProjects(freelancerId!),
+    enabled: !!freelancerId,
   });
 }
 

@@ -27,7 +27,7 @@ export function Navigation() {
             <NavLinks />
           </div>
 
-          <SearchBar />
+          {/* <SearchBar /> */}
 
           <div className="flex items-center space-x-4">
             {isLoggedIn ? (
