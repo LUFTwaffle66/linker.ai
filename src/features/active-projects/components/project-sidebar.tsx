@@ -1,12 +1,8 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
-import { Download, File } from 'lucide-react';
-import { useProjectFiles } from '../api/get-project-files';
 import type { ProjectInfo } from '../types';
 
 interface ProjectSidebarProps {
@@ -14,8 +10,6 @@ interface ProjectSidebarProps {
 }
 
 export function ProjectSidebar({ project }: ProjectSidebarProps) {
-  const { data: files } = useProjectFiles(project.id);
-
   // Calculate budget based on payment status
   const budgetReceived = project.upfrontPaid ? project.upfrontAmount : 0;
   const budgetPending = project.finalPaid ? 0 : project.finalAmount;
@@ -70,40 +64,6 @@ export function ProjectSidebar({ project }: ProjectSidebarProps) {
             <span className="text-muted-foreground">Days Remaining</span>
             <span className="font-medium">{daysRemaining} days</span>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Project Files */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Project Files</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[300px]">
-            <div className="space-y-2">
-              {files?.map((file) => (
-                <div
-                  key={file.id}
-                  className="flex items-center gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
-                >
-                  <div className="w-8 h-8 bg-muted rounded flex items-center justify-center flex-shrink-0">
-                    <File className="w-4 h-4 text-muted-foreground" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{file.name}</p>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{file.size}</span>
-                      <span>•</span>
-                      <span>{file.date}</span>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm" className="flex-shrink-0">
-                    <Download className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </ScrollArea>
         </CardContent>
       </Card>
     </div>

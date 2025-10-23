@@ -1,10 +1,11 @@
 'use client';
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { User, DollarSign, Calendar } from 'lucide-react';
+import { formatDistanceToNow, format } from 'date-fns';
 import type { ProjectInfo } from '../types';
 
 interface ProjectHeaderProps {
@@ -20,6 +21,25 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
     if (project.upfrontPaid && project.finalPaid) return 'Both payments completed';
     if (project.upfrontPaid) return 'Upfront payment received';
     return 'Awaiting upfront payment';
+  };
+
+  // Format dates
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'MMM d, yyyy');
+    } catch {
+      return dateString;
+    }
+  };
+
+  // Get initials for avatar fallback
+  const getInitials = (name: string) => {
+    if (!name) return 'U';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   };
 
   return (
@@ -65,7 +85,7 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
                 <span>•</span>
                 <div className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  <span>Started: {project.startDate}</span>
+                  <span>Started: {formatDate(project.startDate)}</span>
                 </div>
                 <span>•</span>
                 <div className="flex items-center gap-1">
@@ -79,16 +99,20 @@ export function ProjectHeader({ project }: ProjectHeaderProps) {
           <div className="flex items-center gap-3">
             <div className="text-center">
               <Avatar className="w-12 h-12 mb-1">
-                <AvatarFallback>{project.clientAvatar}</AvatarFallback>
+                <AvatarImage src={project.clientAvatar} />
+                <AvatarFallback>{getInitials(project.client)}</AvatarFallback>
               </Avatar>
               <p className="text-xs text-muted-foreground">Client</p>
             </div>
-            <div className="text-center">
-              <Avatar className="w-12 h-12 mb-1">
-                <AvatarFallback>{project.freelancerAvatar}</AvatarFallback>
-              </Avatar>
-              <p className="text-xs text-muted-foreground">Freelancer</p>
-            </div>
+            {project.freelancer && (
+              <div className="text-center">
+                <Avatar className="w-12 h-12 mb-1">
+                  <AvatarImage src={project.freelancerAvatar} />
+                  <AvatarFallback>{getInitials(project.freelancer)}</AvatarFallback>
+                </Avatar>
+                <p className="text-xs text-muted-foreground">Freelancer</p>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>

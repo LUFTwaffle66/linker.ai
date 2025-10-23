@@ -7,6 +7,7 @@ import {
   fetchProjectCategories,
   fetchFreelancerSkills,
   fetchBrowseStats,
+  fetchFreelancersByIds,
   type BrowseFilters,
   type FreelancerFilters,
 } from '../api/browse';
@@ -24,6 +25,8 @@ export const browseKeys = {
   freelancers: () => [...browseKeys.all, 'freelancers'] as const,
   freelancersList: (filters?: FreelancerFilters) =>
     [...browseKeys.freelancers(), 'list', filters] as const,
+  freelancersByIds: (ids: string[]) =>
+    [...browseKeys.freelancers(), 'byIds', ids] as const,
   topFreelancers: (limit?: number) =>
     [...browseKeys.freelancers(), 'top', limit] as const,
   categories: () => [...browseKeys.all, 'categories'] as const,
@@ -105,5 +108,17 @@ export function useBrowseStats() {
     queryKey: browseKeys.stats(),
     queryFn: fetchBrowseStats,
     staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+}
+
+/**
+ * Fetch freelancers by their user IDs
+ */
+export function useFreelancersByIds(ids: string[]) {
+  return useQuery({
+    queryKey: browseKeys.freelancersByIds(ids),
+    queryFn: () => fetchFreelancersByIds(ids),
+    enabled: ids.length > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 }

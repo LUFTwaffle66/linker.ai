@@ -2,8 +2,9 @@ import { CheckCircle, Paperclip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { MOCK_FREELANCERS } from './constants';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useFreelancersByIds } from '@/features/browse/hooks/use-browse';
 
 interface ReviewStepProps {
   formData: {
@@ -25,6 +26,8 @@ export function ReviewStep({
   attachments,
   onBack,
 }: ReviewStepProps) {
+  // Fetch actual freelancer data using the hook
+  const { data: freelancersData, isLoading } = useFreelancersByIds(selectedFreelancers);
   return (
     <div className="space-y-6">
       <Card>
@@ -75,27 +78,39 @@ export function ReviewStep({
             <div>
               <h3 className="font-medium mb-2">Invited AI Experts</h3>
               <div className="space-y-2">
-                {selectedFreelancers.map((freelancerId) => {
-                  const freelancer = MOCK_FREELANCERS.find(
-                    (f) => f.id === freelancerId
-                  );
-                  return freelancer ? (
+                {isLoading ? (
+                  // Loading skeletons
+                  selectedFreelancers.map((id) => (
+                    <div key={id} className="flex items-center gap-3 p-2 bg-muted rounded">
+                      <Skeleton className="w-8 h-8 rounded-full" />
+                      <div className="flex-1 space-y-1">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-24" />
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  // Real freelancer data
+                  freelancersData?.map((freelancer) => (
                     <div
-                      key={freelancerId}
+                      key={freelancer.user_id}
                       className="flex items-center gap-3 p-2 bg-muted rounded"
                     >
                       <Avatar className="w-8 h-8">
-                        <AvatarFallback>{freelancer.avatar}</AvatarFallback>
+                        <AvatarImage src={freelancer.user.avatar_url || undefined} />
+                        <AvatarFallback>
+                          {freelancer.user.full_name?.charAt(0).toUpperCase() || 'U'}
+                        </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="text-sm font-medium">{freelancer.name}</p>
+                        <p className="text-sm font-medium">{freelancer.user.full_name}</p>
                         <p className="text-xs text-muted-foreground">
                           {freelancer.title}
                         </p>
                       </div>
                     </div>
-                  ) : null;
-                })}
+                  ))
+                )}
               </div>
             </div>
           )}

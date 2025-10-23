@@ -4,6 +4,7 @@ export { ProjectHeader } from './components/project-header';
 export { ProjectMessagesTab } from './components/project-messages-tab';
 export { ProjectPaymentTab } from './components/project-payment-tab';
 export { ProjectUpdatesTab } from './components/project-updates-tab';
+export { ProjectProposalsTab } from './components/project-proposals-tab';
 export { ProjectSidebar } from './components/project-sidebar';
 
 // API Hooks

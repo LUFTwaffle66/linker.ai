@@ -263,3 +263,25 @@ export async function fetchBrowseStats() {
     totalFreelancers: freelancersCount.count || 0,
   };
 }
+
+/**
+ * Fetch freelancers by their user IDs
+ */
+export async function fetchFreelancersByIds(ids: string[]) {
+  if (ids.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from('freelancer_profiles')
+    .select(`
+      *,
+      user:users!freelancer_profiles_user_id_fkey(
+        id,
+        full_name,
+        avatar_url
+      )
+    `)
+    .in('user_id', ids);
+
+  if (error) throw error;
+  return data as BrowseFreelancer[];
+}

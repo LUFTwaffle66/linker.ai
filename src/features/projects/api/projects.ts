@@ -1,4 +1,6 @@
 import { supabase } from '@/lib/supabase';
+import { createNotification } from '@/features/notifications/api/notifications';
+import { paths } from '@/config/paths';
 import type { ProjectPostingFormData } from '../types';
 
 /**
@@ -177,6 +179,39 @@ export async function createProject(params: CreateProjectParams) {
     .single();
 
   if (error) throw error;
+
+  // Send notifications to invited freelancers
+  if (invitedFreelancers.length > 0 && isPublished) {
+    const clientName = data.client.company_name || data.client.full_name;
+
+    // Send notification to each invited freelancer
+    for (const freelancerId of invitedFreelancers) {
+      try {
+        await createNotification({
+          user_id: freelancerId,
+          category: 'project_opportunity',
+          type: 'project_invitation',
+          title: 'Project Invitation',
+          message: `${clientName} invited you to submit a proposal for "${title}"`,
+          project_id: data.id,
+          actor_id: user.id,
+          metadata: {
+            project_title: title,
+            client_name: clientName,
+            budget: parseFloat(budgetAmount),
+            timeline,
+            category,
+            skills,
+          },
+          action_url: paths.app.projectDetail.getHref(data.id),
+        });
+      } catch (notificationError) {
+        // Log error but don't fail the project creation
+        console.error('Failed to send invitation notification:', notificationError);
+      }
+    }
+  }
+
   return data as ProjectWithClient;
 }
 
@@ -278,19 +313,65 @@ export async function hireFreelancer(projectId: string, freelancerId: string) {
  * Invite freelancers to a project
  */
 export async function inviteFreelancers(projectId: string, freelancerIds: string[]) {
-  // Fetch current invited freelancers
+  // Fetch current invited freelancers and project details
   const { data: project } = await supabase
     .from('projects')
-    .select('invited_freelancers')
+    .select(`
+      *,
+      client:users!projects_client_id_fkey(
+        id,
+        full_name,
+        company_name,
+        avatar_url
+      )
+    `)
     .eq('id', projectId)
     .single();
 
-  const currentInvites = project?.invited_freelancers || [];
+  if (!project) throw new Error('Project not found');
+
+  const currentInvites = project.invited_freelancers || [];
   const updatedInvites = [...new Set([...currentInvites, ...freelancerIds])];
 
-  return updateProject(projectId, {
+  // Find newly invited freelancers (not previously invited)
+  const newInvites = freelancerIds.filter((id) => !currentInvites.includes(id));
+
+  // Update project with new invites
+  const result = await updateProject(projectId, {
     invited_freelancers: updatedInvites,
   });
+
+  // Send notifications to newly invited freelancers
+  if (newInvites.length > 0 && project.is_published) {
+    const clientName = project.client.company_name || project.client.full_name;
+
+    for (const freelancerId of newInvites) {
+      try {
+        await createNotification({
+          user_id: freelancerId,
+          category: 'project_opportunity',
+          type: 'project_invitation',
+          title: 'Project Invitation',
+          message: `${clientName} invited you to submit a proposal for "${project.title}"`,
+          project_id: projectId,
+          actor_id: project.client_id,
+          metadata: {
+            project_title: project.title,
+            client_name: clientName,
+            budget: project.fixed_budget,
+            timeline: project.timeline,
+            category: project.category,
+            skills: project.skills,
+          },
+          action_url: paths.app.projectDetail.getHref(projectId),
+        });
+      } catch (notificationError) {
+        console.error('Failed to send invitation notification:', notificationError);
+      }
+    }
+  }
+
+  return result;
 }
 
 /**

@@ -7,7 +7,10 @@ export type UpdateType =
   | 'milestone_started'
   | 'payment_released'
   | 'file_uploaded'
-  | 'message';
+  | 'message'
+  | 'deliverable_submitted'
+  | 'deliverable_approved'
+  | 'deliverable_revision_requested';
 
 export interface ProjectInfo {
   id: string;

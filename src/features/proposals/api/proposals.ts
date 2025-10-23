@@ -1,4 +1,6 @@
 import { supabase } from '@/lib/supabase';
+import { createNotification } from '@/features/notifications/api/notifications';
+import { paths } from '@/config/paths';
 import type { ProposalFormData } from '../types';
 
 /**
@@ -229,6 +231,7 @@ export async function createProposal(params: CreateProposalParams) {
         fixed_budget,
         timeline,
         status,
+        client_id,
         client:users!projects_client_id_fkey(
           id,
           full_name,
@@ -240,6 +243,30 @@ export async function createProposal(params: CreateProposalParams) {
     .single();
 
   if (error) throw error;
+
+  // Send notification to client
+  try {
+    await createNotification({
+      user_id: data.project.client_id,
+      category: 'proposal',
+      type: 'new_proposal_received',
+      title: 'New Proposal Received',
+      message: `${data.freelancer.full_name} submitted a proposal for your project "${data.project.title}"`,
+      project_id: projectId,
+      proposal_id: data.id,
+      actor_id: user.id,
+      metadata: {
+        freelancer_name: data.freelancer.full_name,
+        project_title: data.project.title,
+        budget: parseFloat(totalBudget),
+        timeline,
+      },
+      action_url: paths.app.projectDetail.getHref(projectId),
+    });
+  } catch (notificationError) {
+    // Log error but don't fail the proposal creation
+    console.error('Failed to send notification:', notificationError);
+  }
 
   // Flatten the client data from project
   return {
@@ -331,6 +358,75 @@ export async function acceptProposal(proposalId: string, clientFeedback?: string
     })
     .eq('id', proposal.project_id);
 
+  // Create conversation between client and freelancer
+  try {
+    // Check if a conversation already exists between these two users
+    const { data: clientConversations } = await supabase
+      .from('conversation_participants')
+      .select('conversation_id')
+      .eq('user_id', proposal.client.id);
+
+    let conversationExists = false;
+
+    if (clientConversations && clientConversations.length > 0) {
+      const conversationIds = clientConversations.map((c) => c.conversation_id);
+
+      const { data: sharedConversation } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id')
+        .eq('user_id', proposal.freelancer_id)
+        .in('conversation_id', conversationIds)
+        .single();
+
+      if (sharedConversation) {
+        conversationExists = true;
+      }
+    }
+
+    // Create conversation if it doesn't exist
+    if (!conversationExists) {
+      const { data: newConversation, error: convError } = await supabase
+        .from('conversations')
+        .insert({})
+        .select('id')
+        .single();
+
+      if (!convError && newConversation) {
+        // Add both participants to the conversation
+        await supabase.from('conversation_participants').insert([
+          { conversation_id: newConversation.id, user_id: proposal.client.id },
+          { conversation_id: newConversation.id, user_id: proposal.freelancer_id },
+        ]);
+      }
+    }
+  } catch (conversationError) {
+    console.error('Failed to create conversation:', conversationError);
+    // Don't throw - conversation can be created later when first message is sent
+  }
+
+  // Send notification to freelancer
+  try {
+    await createNotification({
+      user_id: proposal.freelancer_id,
+      category: 'proposal',
+      type: 'proposal_accepted',
+      title: 'Proposal Accepted!',
+      message: `Congratulations! Your proposal for "${proposal.project.title}" has been accepted.`,
+      project_id: proposal.project_id,
+      proposal_id: proposalId,
+      actor_id: proposal.client.id,
+      metadata: {
+        project_title: proposal.project.title,
+        client_name: proposal.client.company_name || proposal.client.full_name,
+        budget: proposal.total_budget,
+        client_feedback: clientFeedback,
+      },
+      action_url: paths.app.projectDetail.getHref(proposal.project_id),
+    });
+  } catch (notificationError) {
+    console.error('Failed to send notification:', notificationError);
+  }
+
   return proposal;
 }
 
@@ -338,10 +434,34 @@ export async function acceptProposal(proposalId: string, clientFeedback?: string
  * Reject a proposal
  */
 export async function rejectProposal(proposalId: string, clientFeedback?: string) {
-  return updateProposal(proposalId, {
+  const proposal = await updateProposal(proposalId, {
     status: 'rejected',
     client_feedback: clientFeedback,
   });
+
+  // Send notification to freelancer
+  try {
+    await createNotification({
+      user_id: proposal.freelancer_id,
+      category: 'proposal',
+      type: 'proposal_declined',
+      title: 'Proposal Update',
+      message: `Your proposal for "${proposal.project.title}" was not selected.`,
+      project_id: proposal.project_id,
+      proposal_id: proposalId,
+      actor_id: proposal.client.id,
+      metadata: {
+        project_title: proposal.project.title,
+        client_name: proposal.client.company_name || proposal.client.full_name,
+        client_feedback: clientFeedback,
+      },
+      action_url: paths.public.findWork.getHref(),
+    });
+  } catch (notificationError) {
+    console.error('Failed to send notification:', notificationError);
+  }
+
+  return proposal;
 }
 
 /**
