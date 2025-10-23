@@ -138,9 +138,9 @@ export function Login({ onNavigate, onLogin }: LoginProps) {
                     <FormItem>
                       <div className="flex items-center justify-between">
                         <FormLabel>{t('common.password')}</FormLabel>
-                        <a href="#" className="text-sm text-primary hover:underline">
+                        <Link href="/forgot-password" className="text-sm text-primary hover:underline">
                           {t('common.forgotPassword')}
-                        </a>
+                        </Link>
                       </div>
                       <FormControl>
                         <div className="relative">

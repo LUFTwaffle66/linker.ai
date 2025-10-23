@@ -21,6 +21,20 @@ export const paths = {
   },
 
   public: {
+    login: {
+      getHref: (redirectTo?: string | null | undefined) =>
+        `/login${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`,
+    },
+    signup: {
+      getHref: (redirectTo?: string | null | undefined) =>
+        `/signup${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`,
+    },
+    forgotPassword: {
+      getHref: () => '/forgot-password',
+    },
+    resetPassword: {
+      getHref: () => '/reset-password',
+    },
     browse: {
       getHref: (params?: { tab?: 'projects' | 'freelancers'; q?: string }) => {
         if (!params) return '/browse';
