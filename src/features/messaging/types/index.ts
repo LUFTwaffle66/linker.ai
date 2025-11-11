@@ -6,7 +6,7 @@ export interface User {
   id: string;
   name: string;
   avatar: string;
-  type: UserType;
+  type?: UserType;
   isOnline: boolean;
   lastSeen?: Date;
 }
@@ -24,9 +24,10 @@ export interface Message {
   conversationId: string;
   senderId: string;
   content: string;
-  timestamp: Date;
+  created_at: string;
   read: boolean;
   attachments?: FileAttachment[];
+  sender: User;
 }
 
 export interface Conversation {

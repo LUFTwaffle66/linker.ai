@@ -32,8 +32,8 @@ export function MessageList({ conversationId, currentUserId }: MessageListProps)
   const shouldShowDateSeparator = (currentMessage: Message, previousMessage?: Message): boolean => {
     if (!previousMessage) return true;
 
-    const currentDate = new Date(currentMessage.timestamp);
-    const previousDate = new Date(previousMessage.timestamp);
+    const currentDate = new Date(currentMessage.created_at);
+    const previousDate = new Date(previousMessage.created_at);
 
     return !isSameDay(currentDate, previousDate);
   };
@@ -67,14 +67,14 @@ export function MessageList({ conversationId, currentUserId }: MessageListProps)
             {shouldShowDateSeparator(message, messages[index - 1]) && (
               <div className="flex items-center justify-center my-4">
                 <div className="bg-muted px-3 py-1 rounded-full text-xs text-muted-foreground">
-                  {getDateLabel(new Date(message.timestamp))}
+                  {getDateLabel(new Date(message.created_at))}
                 </div>
               </div>
             )}
 
             <MessageBubble
               message={message}
-              isCurrentUser={message.senderId === currentUserId}
+              isCurrentUser={message.sender.id === currentUserId}
             />
           </div>
         ))}

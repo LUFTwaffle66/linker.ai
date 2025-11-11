@@ -19,6 +19,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCreateOrGetConversation } from '@/features/messaging';
 import { paths } from '@/config/paths';
+import { toast } from 'sonner';
 import type { BrowseFreelancer } from '../types';
 import { AuthRequiredDialog } from './auth-required-dialog';
 
@@ -58,9 +59,11 @@ export function FreelancerDetailSheet({
         userId1: user.id,
         userId2: freelancer.user_id,
       });
+      toast.success('Conversation started!');
       router.push(paths.app.messages.getHref());
     } catch (error) {
       console.error('Failed to create or get conversation:', error);
+      toast.error('Failed to start conversation. Please try again.');
     }
   };
 

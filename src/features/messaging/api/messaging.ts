@@ -56,41 +56,13 @@ export async function sendMessage(conversationId: string, senderId: string, cont
 }
 
 export async function createOrGetConversation(userId1: string, userId2: string): Promise<UUID> {
-  const { data: existingConversations } = await supabase
-    .from('conversation_participants')
-    .select('conversation_id')
-    .in('user_id', [userId1, userId2]);
-
-  const conversationCounts = existingConversations?.reduce((acc, curr) => {
-    if (curr.conversation_id) {
-      acc[curr.conversation_id] = (acc[curr.conversation_id] || 0) + 1;
-    }
-    return acc;
-  }, {} as Record<string, number>) || {};
-
-  const conversationId = conversationCounts && Object.keys(conversationCounts).find((id) => (conversationCounts as any)[id] > 1);
-
-  if (conversationId) {
-    return conversationId;
-  }
-
-  const { data: newConversation, error } = await supabase
-    .from('conversations')
-    .insert({})
-    .select('id')
-    .single();
+  const { data, error } = await supabase.rpc('create_and_get_conversation', {
+    user_id_1: userId1,
+    user_id_2: userId2,
+  });
 
   if (error) throw error;
-  if (!newConversation) throw new Error('Failed to create conversation');
-
-  await supabase
-    .from('conversation_participants')
-    .insert([
-      { conversation_id: newConversation.id, user_id: userId1 },
-      { conversation_id: newConversation.id, user_id: userId2 },
-    ]);
-
-  return newConversation.id;
+  return data;
 }
 
 export async function getConversation(conversationId: string): Promise<Conversation> {

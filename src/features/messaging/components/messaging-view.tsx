@@ -23,9 +23,16 @@ export function MessagingView() {
   };
 
   // Get the other participant (not the current user)
-  const otherParticipant = activeConversation?.participants.find(
-    (p) => p.id !== currentUserId
-  );
+  const otherParticipant = activeConversation
+    ? {
+        id: activeConversation.other_participant_id,
+        name: activeConversation.other_participant_name,
+        avatar: activeConversation.other_participant_avatar,
+        type: 'client' as const, // Placeholder
+        isOnline: false, // Placeholder, as this info is not in the conversation object
+        lastSeen: undefined, // Placeholder
+      }
+    : null;
 
   if (!currentUserId) {
     return (
