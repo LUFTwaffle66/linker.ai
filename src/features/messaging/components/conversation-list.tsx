@@ -32,7 +32,7 @@ export function ConversationList({
     <div className="flex flex-col h-full border-r">
       <div className="p-4 border-b">
         <h2 className="text-xl font-bold mb-4">Messages</h2>
-        <div className="relative">
+        {/* <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             type="text"
@@ -41,7 +41,7 @@ export function ConversationList({
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
           />
-        </div>
+        </div> */}
       </div>
 
       <ScrollArea className="flex-1">
