@@ -7,6 +7,7 @@ import { getMessages } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { routing } from '@/i18n/routing';
 import { Toaster } from '@/components/ui/sonner';
+import { ClerkProvider } from '@clerk/nextjs';
 
 import { TRPCReactProvider } from "@/trpc/react";
 import { AppProvider } from "./provider";
@@ -24,17 +25,17 @@ const geist = Geist({
 });
 
 export function generateStaticParams() {
-	return routing.locales.map((locale) => ({ locale }));
+        return routing.locales.map((locale) => ({ locale }));
 }
 
 export default async function RootLayout({
-	children,
-	params
+        children,
+        params,
 }: Readonly<{
-	children: React.ReactNode;
-	params: Promise<{ locale: string }>;
+        children: React.ReactNode;
+        params: { locale: string };
 }>) {
-	const { locale } = await params;
+        const { locale } = params;
 
 	// Ensure that the incoming `locale` is valid
 	if (!routing.locales.includes(locale as any)) {
@@ -44,25 +45,27 @@ export default async function RootLayout({
 	// Providing all messages to the client
 	const messages = await getMessages();
 
-	return (
-		<html lang={locale} className={`${geist.variable}`} suppressHydrationWarning>
-			<body>
-				<ThemeProvider
-					attribute="class"
-					defaultTheme="system"
-					enableSystem
-					disableTransitionOnChange
-				>
-					<NextIntlClientProvider messages={messages}>
-						<TRPCReactProvider>
-							<AppProvider>
-								{children}
-								<Toaster />
-							</AppProvider>
-						</TRPCReactProvider>
-					</NextIntlClientProvider>
-				</ThemeProvider>
-			</body>
-		</html>
-	);
+        return (
+                <ClerkProvider>
+                        <html lang={locale} className={`${geist.variable}`} suppressHydrationWarning>
+                                <body>
+                                        <ThemeProvider
+                                                attribute="class"
+                                                defaultTheme="system"
+                                                enableSystem
+                                                disableTransitionOnChange
+                                        >
+                                                <NextIntlClientProvider messages={messages}>
+                                                        <TRPCReactProvider>
+                                                                <AppProvider>
+                                                                        {children}
+                                                                        <Toaster />
+                                                                </AppProvider>
+                                                        </TRPCReactProvider>
+                                                </NextIntlClientProvider>
+                                        </ThemeProvider>
+                                </body>
+                        </html>
+                </ClerkProvider>
+        );
 }

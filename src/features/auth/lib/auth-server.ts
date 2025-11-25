@@ -1,5 +1,4 @@
 /**
- * Re-export Supabase Auth server utilities for backwards compatibility
- * This file now uses Supabase Auth instead of NextAuth
+ * Re-export Clerk server utilities for backwards compatibility
  */
 export { getServerSession, getServerUser, requireAuth, isAuthenticated, requireRole } from './supabase-auth-server';
