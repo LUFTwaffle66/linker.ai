@@ -15,7 +15,7 @@ function extractRole(role: unknown): UserRole {
  * Returns null if not authenticated
  */
 export async function getServerSession() {
-  const { sessionId } = auth();
+  const { sessionId } = await auth();
   return sessionId ? { sessionId } : null;
 }
 
@@ -46,7 +46,7 @@ export async function getServerUser() {
  * Redirects to login if not authenticated
  */
 export async function requireAuth(redirectTo: string = '/login') {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     redirect(redirectTo);
   }
@@ -58,7 +58,7 @@ export async function requireAuth(redirectTo: string = '/login') {
  * Returns boolean
  */
 export async function isAuthenticated() {
-  const { userId } = auth();
+  const { userId } = await auth();
   return !!userId;
 }
 

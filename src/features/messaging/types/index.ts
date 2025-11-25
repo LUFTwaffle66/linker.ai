@@ -6,6 +6,8 @@ export interface User {
   id: string;
   name: string;
   avatar: string;
+  full_name?: string;
+  avatar_url?: string;
   type?: UserType;
   isOnline: boolean;
   lastSeen?: Date;
@@ -23,6 +25,7 @@ export interface Message {
   id: string;
   conversationId: string;
   senderId: string;
+  sender_id?: string;
   content: string;
   created_at: string;
   read: boolean;

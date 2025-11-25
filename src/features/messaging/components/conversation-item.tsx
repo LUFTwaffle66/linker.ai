@@ -24,7 +24,9 @@ export function ConversationItem({
 
   if (!otherParticipant) return null;
 
-  const initials = otherParticipant.user.full_name
+  const displayName = otherParticipant.user.full_name || otherParticipant.user.name;
+
+  const initials = displayName
     ?.split(' ')
     .map((n: string) => n[0])
     .join('')
@@ -40,7 +42,7 @@ export function ConversationItem({
     >
       <div className="relative">
         <Avatar>
-          <AvatarImage src={otherParticipant.user.avatar_url} alt={otherParticipant.user.full_name} />
+          <AvatarImage src={otherParticipant.user.avatar_url || otherParticipant.user.avatar} alt={displayName} />
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
       </div>
@@ -48,7 +50,7 @@ export function ConversationItem({
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between gap-2 mb-1">
           <div className="flex items-center gap-2">
-            <p className="font-semibold text-sm truncate">{otherParticipant.user.full_name}</p>
+            <p className="font-semibold text-sm truncate">{displayName}</p>
             {conversation.isStarred && <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />}
             {conversation.isMuted && <VolumeX className="w-3 h-3 text-muted-foreground" />}
           </div>
@@ -61,7 +63,9 @@ export function ConversationItem({
 
         <div className="flex items-center justify-between gap-2">
           <p className="flex-1 text-sm text-muted-foreground truncate overflow-hidden text-ellipsis">
-            {conversation.lastMessage?.sender_id === currentUserId && <span className="font-medium">You: </span>}
+            {(conversation.lastMessage?.sender_id ?? conversation.lastMessage?.senderId) === currentUserId && (
+              <span className="font-medium">You: </span>
+            )}
             {conversation.lastMessage?.content}
           </p>
           {conversation.unread_count > 0 && (

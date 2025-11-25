@@ -13,7 +13,7 @@ export interface ClerkProfile {
 }
 
 export async function getCurrentUser() {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) return null;
 
   const clerkUser = await currentUser();
@@ -31,7 +31,7 @@ export async function getCurrentUser() {
 }
 
 export async function requireAuth() {
-  const { userId } = auth();
+  const { userId } = await auth();
   if (!userId) {
     throw new Error('Unauthorized');
   }
@@ -39,7 +39,13 @@ export async function requireAuth() {
 }
 
 export async function requireRole(role: UserRole) {
-  const { profile } = await getCurrentUser();
+  const current = await getCurrentUser();
+
+  if (!current) {
+    throw new Error('Unauthorized');
+  }
+
+  const { profile } = current;
 
   if (!profile || profile.role !== role) {
     throw new Error('Unauthorized');

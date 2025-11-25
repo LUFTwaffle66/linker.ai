@@ -27,7 +27,8 @@ export function ConversationList({
     const otherParticipant = c.participants.find(
       (p: ConversationParticipant) => p.user.id !== currentUserId,
     );
-    return otherParticipant?.user.full_name?.toLowerCase().includes(searchQuery.toLowerCase());
+    const name = otherParticipant?.user.full_name || otherParticipant?.user.name || '';
+    return name.toLowerCase().includes(searchQuery.toLowerCase());
   });
 
   return (

@@ -8,6 +8,7 @@ export interface User {
   role: UserRole;
   company_name?: string;
   avatar_url?: string;
+  password_hash?: string;
   phone?: string;
   is_active: boolean;
   is_banned: boolean;
