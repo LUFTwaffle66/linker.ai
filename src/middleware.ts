@@ -1,26 +1,28 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import createIntlMiddleware from "next-intl/middleware";
-
 import { routing } from "./i18n/routing";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
+const isPublicRoute = createRouteMatcher([
+  "/:locale/(auth)(.*)",
+  "/:locale/login",
+  "/:locale/signup",
+  "/api/webhooks/clerk(.*)",
+  "/:locale",
+]);
+
 const isProtectedRoute = createRouteMatcher([
-  "/:locale/dashboard(.*)",
-  "/:locale/projects/post(.*)",
-  "/:locale/proposals(.*)",
-  "/:locale/messages(.*)",
-  "/:locale/notifications(.*)",
-  "/:locale/account(.*)",
+  "/:locale/(protected)(.*)",
   "/api/profile(.*)",
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
-  if (isProtectedRoute(req)) {
-    await auth.protect();
+export default clerkMiddleware(async (auth, request) => {
+  if (isProtectedRoute(request) && !isPublicRoute(request)) {
+    await auth.protect(); // nový správný způsob
   }
 
-  return intlMiddleware(req);
+  return intlMiddleware(request);
 });
 
 export const config = {
