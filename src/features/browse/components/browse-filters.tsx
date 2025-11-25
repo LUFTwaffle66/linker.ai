@@ -32,7 +32,10 @@ export function BrowseFiltersComponent({
   availableSkills = []
 }: BrowseFiltersComponentProps) {
 
-  const updateFilters = (key: string, value: any) => {
+  const updateFilters = (
+    key: string,
+    value: string | string[] | number | boolean | undefined,
+  ) => {
     onFiltersChange({ ...filters, [key]: value });
   };
 
@@ -194,9 +197,9 @@ export function BrowseFiltersComponent({
                   <div key={rating} className="flex items-center space-x-2">
                   <Checkbox
                     id={`rating-${rating}`}
-                    checked={(filters as any).minRating === rating}
+                    checked={(filters as FreelancerFilters).minRating === rating}
                     onCheckedChange={(checked) =>
-                      updateFilters('minRating', checked ? rating : undefined)
+                      updateFilters('minRating', checked === true ? rating : undefined)
                     }
                   />
                     <Label
@@ -219,8 +222,10 @@ export function BrowseFiltersComponent({
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="available"
-                    checked={(filters as any).availableOnly || false}
-                    onCheckedChange={(checked) => updateFilters('availableOnly', checked)}
+                    checked={(filters as FreelancerFilters).availableOnly || false}
+                    onCheckedChange={(checked) =>
+                      updateFilters('availableOnly', checked === true)
+                    }
                   />
                   <Label htmlFor="available" className="text-sm font-normal cursor-pointer">
                     Available now
@@ -229,8 +234,10 @@ export function BrowseFiltersComponent({
                 <div className="flex items-center space-x-2">
                   <Checkbox
                     id="top-rated"
-                    checked={(filters as any).topRatedOnly || false}
-                    onCheckedChange={(checked) => updateFilters('topRatedOnly', checked)}
+                    checked={(filters as FreelancerFilters).topRatedOnly || false}
+                    onCheckedChange={(checked) =>
+                      updateFilters('topRatedOnly', checked === true)
+                    }
                   />
                   <Label htmlFor="top-rated" className="text-sm font-normal cursor-pointer">
                     Top Rated

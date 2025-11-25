@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ConversationItem } from './conversation-item';
 import { useConversations } from '../hooks';
-import type { Conversation } from '../types';
+import type { Conversation, ConversationParticipant } from '../types';
 
 interface ConversationListProps {
   currentUserId: string;
@@ -24,7 +24,9 @@ export function ConversationList({
   const { data: conversations, isLoading } = useConversations(currentUserId);
 
   const displayedConversations = conversations?.filter((c) => {
-    const otherParticipant = c.participants.find((p: any) => p.user.id !== currentUserId);
+    const otherParticipant = c.participants.find(
+      (p: ConversationParticipant) => p.user.id !== currentUserId,
+    );
     return otherParticipant?.user.full_name?.toLowerCase().includes(searchQuery.toLowerCase());
   });
 

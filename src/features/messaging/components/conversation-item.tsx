@@ -3,7 +3,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Star, VolumeX } from 'lucide-react';
-import type { Conversation } from '../types';
+import type { Conversation, ConversationParticipant } from '../types';
 
 interface ConversationItemProps {
   conversation: Conversation;
@@ -18,7 +18,9 @@ export function ConversationItem({
   isActive,
   onClick,
 }: ConversationItemProps) {
-  const otherParticipant = conversation.participants.find((p: any) => p.user.id !== currentUserId);
+  const otherParticipant = conversation.participants.find(
+    (p: ConversationParticipant) => p.user.id !== currentUserId,
+  );
 
   if (!otherParticipant) return null;
 

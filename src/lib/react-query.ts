@@ -12,10 +12,10 @@ export const queryClient = new QueryClient({
   defaultOptions: queryConfig,
 });
 
-export type ApiFnReturnType<FnType extends (...args: any) => Promise<any>> =
+export type ApiFnReturnType<FnType extends (...args: never[]) => Promise<unknown>> =
   Awaited<ReturnType<FnType>>;
 
-export type QueryConfig<T extends (...args: any[]) => any> = Omit<
+export type QueryConfig<T extends (...args: never[]) => unknown> = Omit<
   ReturnType<T>,
   'queryKey' | 'queryFn'
 >;

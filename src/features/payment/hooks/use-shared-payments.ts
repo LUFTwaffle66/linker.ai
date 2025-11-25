@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getPaymentMethods, addPaymentMethod, getTaxDocuments } from '../api/payment';
-import type { AddPaymentMethodFormData } from '../types';
+import type { AddPaymentMethodFormData, PaymentMethod } from '../types';
 
 export const paymentKeys = {
   all: ['payment'] as const,
@@ -28,14 +28,17 @@ export function useAddPaymentMethod() {
   return useMutation({
     mutationFn: (data: AddPaymentMethodFormData) => addPaymentMethod(data),
     onSuccess: (newPaymentMethod) => {
-      queryClient.setQueryData(paymentKeys.paymentMethods(), (old: any) => {
-        if (!old) return [newPaymentMethod];
-        if (newPaymentMethod.isDefault) {
-          const updated = old.map((pm: any) => ({ ...pm, isDefault: false }));
-          return [newPaymentMethod, ...updated];
-        }
-        return [newPaymentMethod, ...old];
-      });
+      queryClient.setQueryData<PaymentMethod[]>(
+        paymentKeys.paymentMethods(),
+        (old) => {
+          if (!old) return [newPaymentMethod];
+          if (newPaymentMethod.isDefault) {
+            const updated = old.map((pm) => ({ ...pm, isDefault: false }));
+            return [newPaymentMethod, ...updated];
+          }
+          return [newPaymentMethod, ...old];
+        },
+      );
     },
   });
 }
