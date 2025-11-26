@@ -1,14 +1,23 @@
-'use client';
-
-import { useParams } from 'next/navigation';
 import { useAuth } from '@/features/auth/lib/auth-client';
 import { ClientProfile, useClientProfile } from '@/features/profiles';
 
-export default function ClientProfilePage() {
-  const params = useParams();
-  const clientId = params.clientId as string;
-  const { user } = useAuth();
+interface ClientProfilePageProps {
+  params: Promise<{
+    clientId: string;
+    locale: string;
+  }>;
+}
 
+export default async function ClientProfilePage({ params }: ClientProfilePageProps) {
+  const { clientId } = await params;
+
+  return <ClientProfilePageClient clientId={clientId} />;
+}
+
+function ClientProfilePageClient({ clientId }: { clientId: string }) {
+  'use client';
+
+  const { user } = useAuth();
   const { data, isLoading, error } = useClientProfile(clientId);
 
   // Check if the logged-in user is viewing their own profile

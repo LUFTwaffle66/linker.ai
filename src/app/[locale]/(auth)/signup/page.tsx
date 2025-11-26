@@ -1,5 +1,13 @@
-import { Signup } from '@/features/auth/components/signup';
+import { SignUp } from '@clerk/nextjs';
 
-export default function SignupPage() {
-  return <Signup />;
+type SignupPageProps = {
+  params: { locale: string };
+};
+
+export default function SignupPage({ params }: SignupPageProps) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-950">
+      <SignUp redirectUrl={`/${params.locale}/dashboard`} />
+    </div>
+  );
 }

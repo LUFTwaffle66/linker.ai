@@ -1,28 +1,31 @@
-import createMiddleware from 'next-intl/middleware';
-import { routing } from './i18n/routing';
-import { type NextRequest } from 'next/server';
-import { updateSession } from './lib/supabase/middleware';
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import createIntlMiddleware from "next-intl/middleware";
 
-const intlMiddleware = createMiddleware(routing);
+import { routing } from "./i18n/routing";
 
-export async function middleware(request: NextRequest) {
-  // First update the Supabase session
-  const supabaseResponse = await updateSession(request);
+const intlMiddleware = createIntlMiddleware(routing);
 
-  // If Supabase middleware returned a redirect, return it
-  if (supabaseResponse.status !== 200) {
-    return supabaseResponse;
+const isProtectedRoute = createRouteMatcher([
+  "/:locale/dashboard(.*)",
+  "/:locale/projects/post(.*)",
+  "/:locale/proposals(.*)",
+  "/:locale/messages(.*)",
+  "/:locale/notifications(.*)",
+  "/:locale/account(.*)",
+  "/api/profile(.*)",
+]);
+
+export default clerkMiddleware(async (auth, req) => {
+  if (isProtectedRoute(req)) {
+    await auth.protect();
   }
 
-  // Otherwise, continue with next-intl middleware
-  return intlMiddleware(request);
-}
+  return intlMiddleware(req);
+});
 
 export const config = {
-  // Match all pathnames except for
-  // - … if they start with `/api`, `/_next` or `/_vercel`
-  // - … the ones containing a dot (e.g. `favicon.ico`)
   matcher: [
-    '/((?!api|_next|_vercel|.*\\..*).*)'
-  ]
+    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/(api|trpc)(.*)",
+  ],
 };

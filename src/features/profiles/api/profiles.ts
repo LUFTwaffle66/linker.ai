@@ -9,6 +9,15 @@ export class ApiError extends Error {
   }
 }
 
+interface PortfolioItem {
+  id: string;
+  title: string;
+  description: string;
+  tags: string[];
+  imageUrl?: string | null;
+  url?: string | null;
+}
+
 /**
  * Fetch client profile by user ID
  * @param userId - The user ID to fetch profile for
@@ -149,7 +158,7 @@ export const getFreelancerProfile = async (userId: string): Promise<FreelancerPr
     certifications: [],
     // Use new portfolio JSONB column, fallback to old single-item columns for backward compatibility
     portfolio: profile.portfolio && Array.isArray(profile.portfolio) && profile.portfolio.length > 0
-      ? profile.portfolio.map((item: any) => ({
+      ? profile.portfolio.map((item: PortfolioItem) => ({
           id: item.id,
           title: item.title,
           description: item.description,
@@ -366,7 +375,7 @@ export const addFreelancerPortfolio = async (
   }
 
   // Add new portfolio item to the array with a generated ID
-  const currentPortfolio = (profile.portfolio as any[]) || [];
+  const currentPortfolio = (profile.portfolio as PortfolioItem[]) || [];
   const newPortfolioItem = {
     id: crypto.randomUUID(),
     title: portfolioItem.title,
@@ -421,8 +430,8 @@ export const updateFreelancerPortfolio = async (
   }
 
   // Update the specific portfolio item
-  const currentPortfolio = (profile.portfolio as any[]) || [];
-  const updatedPortfolio = currentPortfolio.map((item: any) =>
+  const currentPortfolio = (profile.portfolio as PortfolioItem[]) || [];
+  const updatedPortfolio = currentPortfolio.map((item: PortfolioItem) =>
     item.id === portfolioId
       ? {
           ...item,
@@ -471,8 +480,8 @@ export const deleteFreelancerPortfolio = async (
   }
 
   // Remove the portfolio item
-  const currentPortfolio = (profile.portfolio as any[]) || [];
-  const updatedPortfolio = currentPortfolio.filter((item: any) => item.id !== portfolioId);
+  const currentPortfolio = (profile.portfolio as PortfolioItem[]) || [];
+  const updatedPortfolio = currentPortfolio.filter((item: PortfolioItem) => item.id !== portfolioId);
 
   // Update the profile
   const { error: updateError } = await supabase

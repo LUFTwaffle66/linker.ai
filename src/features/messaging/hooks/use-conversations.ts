@@ -6,7 +6,7 @@ import {
   deleteConversation,
   searchConversations,
 } from '../api/messaging';
-import type { ConversationSettings } from '../types';
+import type { Conversation, ConversationSettings } from '../types';
 import { useAuth } from '@/features/auth/lib/auth-client';
 
 export const messagingKeys = {
@@ -62,12 +62,12 @@ export function useUpdateConversationSettings() {
       conversationId: string;
       settings: Partial<ConversationSettings>;
     }) => updateConversationSettings(conversationId, settings),
-    onSuccess: (updatedConversation: any) => {
+    onSuccess: (updatedConversation: Conversation) => {
       // Update the specific conversation in cache
       if (updatedConversation?.id) {
         queryClient.setQueryData(
           messagingKeys.conversation(updatedConversation.id),
-          updatedConversation
+          updatedConversation,
         );
       }
 
