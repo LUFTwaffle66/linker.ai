@@ -19,7 +19,7 @@ const isProtectedRoute = createRouteMatcher([
 
 export default clerkMiddleware(async (auth, request) => {
   if (isProtectedRoute(request) && !isPublicRoute(request)) {
-    await auth.protect(); // nový správný způsob
+    await auth.protect(); 
   }
 
   return intlMiddleware(request);
