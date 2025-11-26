@@ -3,8 +3,9 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useClerk, useSession, useUser } from '@clerk/nextjs';
-import type { SessionResource } from '@clerk/types';
 import type { UserRole } from '../types/auth';
+
+type SessionValue = ReturnType<typeof useSession>['session'];
 
 export interface User {
   id: string;
@@ -18,7 +19,7 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
-  session: SessionResource | null;
+  session: SessionValue;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: () => Promise<{ error: Error | null }>;
