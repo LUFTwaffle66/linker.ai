@@ -24,6 +24,7 @@ export default clerkMiddleware(async (auth, request) => {
     await auth.protect();
   }
 
+  // API (a trpc) routy necháme projít bez locale přepisování
   if (request.nextUrl.pathname.startsWith("/api")) {
     return NextResponse.next();
   }
