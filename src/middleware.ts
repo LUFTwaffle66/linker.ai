@@ -1,13 +1,15 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import createIntlMiddleware from "next-intl/middleware";
+import { NextResponse } from "next/server";
+
 import { routing } from "./i18n/routing";
 
 const intlMiddleware = createIntlMiddleware(routing);
 
 const isPublicRoute = createRouteMatcher([
   "/:locale/(auth)(.*)",
-  "/:locale/login",
-  "/:locale/signup",
+  "/:locale/login(.*)",
+  "/:locale/signup(.*)",
   "/api/webhooks/clerk(.*)",
   "/:locale",
 ]);
@@ -19,7 +21,12 @@ const isProtectedRoute = createRouteMatcher([
 
 export default clerkMiddleware(async (auth, request) => {
   if (isProtectedRoute(request) && !isPublicRoute(request)) {
-    await auth.protect(); 
+    await auth.protect();
+  }
+
+  // API (a trpc) routy necháme projít bez locale přepisování
+  if (request.nextUrl.pathname.startsWith("/api")) {
+    return NextResponse.next();
   }
 
   return intlMiddleware(request);
