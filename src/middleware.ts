@@ -17,6 +17,7 @@ const isPublicRoute = createRouteMatcher([
 const isProtectedRoute = createRouteMatcher([
   "/:locale/(protected)(.*)",
   "/api/profile(.*)",
+  "/api/onboarding/(.*)",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
@@ -41,6 +42,7 @@ export default clerkMiddleware(async (auth, request) => {
 export const config = {
   matcher: [
     "/((?!_next|api|trpc|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
-    "/(api|trpc)(.*)",
+    "/api/(.*)",
+    "/trpc/(.*)",
   ],
 };
