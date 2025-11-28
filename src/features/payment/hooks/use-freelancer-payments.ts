@@ -5,7 +5,7 @@ import {
   getFreelancerTransactions,
   withdrawFunds,
 } from '../api/payment';
-import type { WithdrawalFormData } from '../types';
+import type { Transaction, WithdrawalFormData } from '../types';
 import { paymentKeys } from './use-shared-payments';
 
 export function useFreelancerEarnings() {
@@ -40,10 +40,13 @@ export function useWithdrawFunds() {
   return useMutation({
     mutationFn: (data: WithdrawalFormData) => withdrawFunds(data),
     onSuccess: (newTransaction) => {
-      queryClient.setQueryData(paymentKeys.freelancerTransactions(), (old: any) => {
-        if (!old) return [newTransaction];
-        return [newTransaction, ...old];
-      });
+      queryClient.setQueryData<Transaction[]>(
+        paymentKeys.freelancerTransactions(),
+        (old) => {
+          if (!old) return [newTransaction];
+          return [newTransaction, ...old];
+        },
+      );
       queryClient.invalidateQueries({ queryKey: paymentKeys.freelancerEarnings() });
     },
   });

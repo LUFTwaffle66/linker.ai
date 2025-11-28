@@ -6,6 +6,8 @@ export interface User {
   id: string;
   name: string;
   avatar: string;
+  full_name?: string;
+  avatar_url?: string;
   type?: UserType;
   isOnline: boolean;
   lastSeen?: Date;
@@ -23,11 +25,17 @@ export interface Message {
   id: string;
   conversationId: string;
   senderId: string;
+  sender_id?: string;
   content: string;
   created_at: string;
   read: boolean;
   attachments?: FileAttachment[];
   sender: User;
+}
+
+export interface ConversationParticipant {
+  user_id: string;
+  user: User;
 }
 
 export interface Conversation {
@@ -40,8 +48,8 @@ export interface Conversation {
   other_participant_name: string;
   other_participant_avatar: string;
   unread_count: number;
-  participants: any[];
-  lastMessage: any;
+  participants: ConversationParticipant[];
+  lastMessage: Message | null;
   isMuted: boolean;
   isStarred: boolean;
 }
@@ -56,7 +64,17 @@ export interface ConversationSettings {
 export const sendMessageSchema = z.object({
   conversationId: z.string().min(1),
   content: z.string().min(1).max(5000),
-  attachments: z.array(z.any()).optional(),
+  attachments: z
+    .array(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        size: z.number(),
+        type: z.string(),
+        url: z.string(),
+      }),
+    )
+    .optional(),
 });
 
 export type SendMessageFormData = z.infer<typeof sendMessageSchema>;

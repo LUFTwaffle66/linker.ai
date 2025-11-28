@@ -28,8 +28,8 @@ export function useUpdateFreelancerBio() {
       });
       toast.success('Bio updated successfully!');
     },
-    onError: (error: any) => {
-      toast.error(error?.message || 'Failed to update bio');
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update bio');
     },
   });
 }
@@ -49,8 +49,8 @@ export function useUpdateFreelancerSkills() {
       });
       toast.success('Skills updated successfully!');
     },
-    onError: (error: any) => {
-      toast.error(error?.message || 'Failed to update skills');
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update skills');
     },
   });
 }
@@ -81,8 +81,8 @@ export function useAddFreelancerPortfolio() {
       });
       toast.success('Portfolio item added successfully!');
     },
-    onError: (error: any) => {
-      toast.error(error?.message || 'Failed to add portfolio item');
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to add portfolio item');
     },
   });
 }
@@ -115,8 +115,8 @@ export function useUpdateFreelancerPortfolio() {
       });
       toast.success('Portfolio item updated successfully!');
     },
-    onError: (error: any) => {
-      toast.error(error?.message || 'Failed to update portfolio item');
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update portfolio item');
     },
   });
 }
@@ -141,8 +141,8 @@ export function useDeleteFreelancerPortfolio() {
       });
       toast.success('Portfolio item deleted successfully!');
     },
-    onError: (error: any) => {
-      toast.error(error?.message || 'Failed to delete portfolio item');
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to delete portfolio item');
     },
   });
 }
@@ -172,8 +172,8 @@ export function useAddFreelancerExperience() {
       });
       toast.success('Work experience added successfully!');
     },
-    onError: (error: any) => {
-      toast.error(error?.message || 'Failed to add work experience');
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to add work experience');
     },
   });
 }
@@ -193,8 +193,8 @@ export function useUpdateClientBio() {
       });
       toast.success('Bio updated successfully!');
     },
-    onError: (error: any) => {
-      toast.error(error?.message || 'Failed to update bio');
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update bio');
     },
   });
 }
