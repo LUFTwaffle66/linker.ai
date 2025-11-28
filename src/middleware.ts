@@ -20,16 +20,17 @@ const isProtectedRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
-  const pathname = request.nextUrl.pathname;
+  const { pathname } = request.nextUrl;
 
+  // 1) API / TRPC – bez locale přepisování
   if (pathname.startsWith("/api") || pathname.startsWith("/trpc")) {
     if (isProtectedRoute(request) && !isPublicRoute(request)) {
       await auth.protect();
     }
-
     return NextResponse.next();
   }
 
+  // 2) Ostatní routy – nejdřív ochrana, pak intl
   if (isProtectedRoute(request) && !isPublicRoute(request)) {
     await auth.protect();
   }
