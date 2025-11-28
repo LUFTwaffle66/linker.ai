@@ -19,7 +19,7 @@ export async function createRouteHandlerClient() {
  * Get authenticated user in API route using Clerk
  */
 export async function getRouteHandlerUser() {
-  const { userId } = auth();
+  const { userId } = await auth();
 
   if (!userId) return null;
 
