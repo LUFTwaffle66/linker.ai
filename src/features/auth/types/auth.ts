@@ -3,12 +3,12 @@ export type UserRole = 'admin' | 'client' | 'freelancer';
 export interface User {
   id: string;
   email: string;
-  password_hash: string;
+  clerk_user_id: string;
   full_name: string;
   role: UserRole;
   company_name?: string;
   avatar_url?: string;
-  email_verified: boolean;
+  password_hash?: string;
   phone?: string;
   is_active: boolean;
   is_banned: boolean;

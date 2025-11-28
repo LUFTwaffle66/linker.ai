@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getMessages, sendMessage, markAsRead } from '../api/messaging';
 import { messagingKeys } from './use-conversations';
 import { useAuth } from '@/features/auth/lib/auth-client';
+import type { Message } from '../types';
 
 /**
  * Hook to fetch messages for a conversation
@@ -36,12 +37,12 @@ export function useSendMessage() {
     },
     onSuccess: (newMessage) => {
       // Add the new message to the messages cache
-      queryClient.setQueryData(
+      queryClient.setQueryData<Message[]>(
         messagingKeys.messages(newMessage.conversationId),
-        (old: any) => {
+        (old) => {
           if (!old) return [newMessage];
           return [...old, newMessage];
-        }
+        },
       );
 
       // Invalidate conversations to update last message and timestamp

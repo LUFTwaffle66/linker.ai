@@ -1,11 +1,13 @@
 import { ActiveProjectView } from '@/features/active-projects';
 
 interface ProjectPageProps {
-  params: {
+  params: Promise<{
     projectId: string;
-  };
+    locale: string;
+  }>;
 }
 
-export default function ProjectPage({ params }: any) {
-  return <ActiveProjectView projectId={params?.projectId} />;
+export default async function ProjectPage({ params }: ProjectPageProps) {
+  const { projectId } = await params;
+  return <ActiveProjectView projectId={projectId} />;
 }

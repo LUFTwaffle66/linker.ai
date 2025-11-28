@@ -116,6 +116,10 @@ export async function verifyCredentials(
   }
 
   // Verify password
+  if (!user.password_hash) {
+    return null;
+  }
+
   const isValid = await comparePassword(password, user.password_hash);
 
   if (!isValid) {
