@@ -6,7 +6,7 @@ import {
   addFunds,
   releaseFinalPayment,
 } from '../api/payment';
-import type { AddFundsFormData, ReleaseFinalPaymentFormData } from '../types';
+import type { AddFundsFormData, ReleaseFinalPaymentFormData, Transaction } from '../types';
 import { paymentKeys } from './use-shared-payments';
 
 export function useClientBalance() {
@@ -41,10 +41,13 @@ export function useAddFunds() {
   return useMutation({
     mutationFn: (data: AddFundsFormData) => addFunds(data),
     onSuccess: (newTransaction) => {
-      queryClient.setQueryData(paymentKeys.clientTransactions(), (old: any) => {
-        if (!old) return [newTransaction];
-        return [newTransaction, ...old];
-      });
+      queryClient.setQueryData<Transaction[]>(
+        paymentKeys.clientTransactions(),
+        (old) => {
+          if (!old) return [newTransaction];
+          return [newTransaction, ...old];
+        },
+      );
       queryClient.invalidateQueries({ queryKey: paymentKeys.clientBalance() });
     },
   });
@@ -55,10 +58,13 @@ export function useReleaseFinalPayment() {
   return useMutation({
     mutationFn: (data: ReleaseFinalPaymentFormData) => releaseFinalPayment(data),
     onSuccess: (newTransaction) => {
-      queryClient.setQueryData(paymentKeys.clientTransactions(), (old: any) => {
-        if (!old) return [newTransaction];
-        return [newTransaction, ...old];
-      });
+      queryClient.setQueryData<Transaction[]>(
+        paymentKeys.clientTransactions(),
+        (old) => {
+          if (!old) return [newTransaction];
+          return [newTransaction, ...old];
+        },
+      );
       queryClient.invalidateQueries({ queryKey: paymentKeys.clientBalance() });
       queryClient.invalidateQueries({ queryKey: paymentKeys.clientProjects() });
     },

@@ -1,10 +1,11 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
-import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
+import { useClerk, useSession, useUser } from '@clerk/nextjs';
 import type { UserRole } from '../types/auth';
+
+type SessionValue = ReturnType<typeof useSession>['session'];
 
 export interface User {
   id: string;
@@ -18,141 +19,74 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
-  session: Session | null;
+  session: SessionValue;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ error: Error | null }>;
+  login: () => Promise<{ error: Error | null }>;
   logout: () => Promise<void>;
   signUp: (email: string, password: string, fullName: string, role: UserRole) => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
-
-  useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      if (session?.user) {
-        loadUserProfile(session.user);
-      } else {
-        setIsLoading(false);
-      }
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (session?.user) {
-        loadUserProfile(session.user);
-      } else {
-        setUser(null);
-        setIsLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  async function loadUserProfile(supabaseUser: SupabaseUser) {
-    try {
-      const { data: profile, error } = await supabase
-        .from('users')
-        .select('id, email, full_name, avatar_url, role')
-        .eq('id', supabaseUser.id)
-        .single();
-
-      if (error) throw error;
-
-      if (profile) {
-        setUser({
-          id: profile.id,
-          email: profile.email,
-          name: profile.full_name,
-          fullName: profile.full_name,
-          image: profile.avatar_url || undefined,
-          avatarUrl: profile.avatar_url || undefined,
-          role: profile.role as UserRole,
-        });
-      }
-    } catch (error) {
-      console.error('Error loading user profile:', error);
-    } finally {
-      setIsLoading(false);
-    }
+function extractRole(metadataRole: unknown): UserRole {
+  if (metadataRole === 'admin' || metadataRole === 'client' || metadataRole === 'freelancer') {
+    return metadataRole;
   }
 
-  const login = async (email: string, password: string) => {
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+  return 'client';
+}
 
-      if (error) return { error };
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
+  const { session, isLoaded: isSessionLoaded } = useSession();
+  const { signOut } = useClerk();
 
-      router.push('/dashboard');
-      return { error: null };
-    } catch (error) {
-      return { error: error as Error };
-    }
+  const user = useMemo<User | null>(() => {
+    if (!clerkUser) return null;
+
+    const primaryEmail = clerkUser.emailAddresses?.[0]?.emailAddress ?? '';
+    const role = extractRole(clerkUser.publicMetadata.role);
+
+    return {
+      id: clerkUser.id,
+      email: primaryEmail,
+      name: clerkUser.firstName || clerkUser.username || primaryEmail,
+      fullName: clerkUser.fullName || clerkUser.username || primaryEmail,
+      image: clerkUser.imageUrl,
+      avatarUrl: clerkUser.imageUrl,
+      role,
+    };
+  }, [clerkUser]);
+
+  const login = async () => {
+    const locale = typeof window !== 'undefined' ? window.location.pathname.split('/')[1] : 'en';
+    router.push(`/${locale}/login`);
+    return { error: null };
   };
 
-  const signUp = async (email: string, password: string, fullName: string, role: UserRole) => {
-    try {
-      // First create the auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
-            role: role,
-          },
-        },
-      });
-
-      if (authError) return { error: authError };
-      if (!authData.user) return { error: new Error('Failed to create user') };
-
-      // Create user profile in users table
-      const { error: profileError } = await supabase.from('users').insert({
-        id: authData.user.id,
-        email: email,
-        full_name: fullName,
-        role: role,
-        password_hash: '', // Supabase Auth handles passwords, this is just for schema compatibility
-      });
-
-      if (profileError) return { error: profileError };
-
-      return { error: null };
-    } catch (error) {
-      return { error: error as Error };
-    }
+  const signUp = async (_email: string, _password: string, _fullName: string, _role: UserRole) => {
+    const locale = typeof window !== 'undefined' ? window.location.pathname.split('/')[1] : 'en';
+    router.push(`/${locale}/signup`);
+    return { error: null };
   };
 
   const logout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-    router.push('/login');
+    await signOut();
+    const locale = typeof window !== 'undefined' ? window.location.pathname.split('/')[1] : 'en';
+    router.push(`/${locale}/login`);
   };
+
+  const isLoading = !isUserLoaded || !isSessionLoaded;
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        session,
+        session: session || null,
         isLoading,
-        isAuthenticated: !!session,
+        isAuthenticated: !!user,
         login,
         logout,
         signUp,
