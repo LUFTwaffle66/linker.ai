@@ -95,7 +95,9 @@ export const useSaveFreelancerOnboarding = ({
 
   return useMutation({
     mutationFn: async (data: FreelancerOnboardingData) => {
+      console.log('FREELANCER SUBMIT DATA', data);
       const result = await saveFreelancerOnboarding(data);
+      console.log('FREELANCER SUBMIT RESULT', result);
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to save freelancer profile');
@@ -104,6 +106,7 @@ export const useSaveFreelancerOnboarding = ({
       return result as { success: true; profile: FreelancerProfile };
     },
     onSuccess: async (data) => {
+      console.log('FREELANCER SUBMIT SUCCESS', data);
       // Invalidate and refetch freelancer onboarding query
       await queryClient.invalidateQueries({ queryKey: onboardingKeys.freelancer() });
       if (onSuccess) {
@@ -111,6 +114,7 @@ export const useSaveFreelancerOnboarding = ({
       }
     },
     onError: (error: Error) => {
+      console.error('FREELANCER SUBMIT ERROR', error);
       if (onError) {
         onError(error);
       }
