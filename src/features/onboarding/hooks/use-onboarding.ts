@@ -2,9 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   saveClientOnboarding,
   saveFreelancerOnboarding,
-  getClientOnboarding,
-  getFreelancerOnboarding,
-} from '../api/onboarding';
+  getClientOnboardingData,
+  getFreelancerOnboardingData,
+} from '../actions';
 import type {
   ClientOnboardingData,
   FreelancerOnboardingData,
@@ -37,7 +37,15 @@ export const useSaveClientOnboarding = ({
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: ClientOnboardingData) => saveClientOnboarding(data),
+    mutationFn: async (data: ClientOnboardingData) => {
+      const result = await saveClientOnboarding(data);
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to save client profile');
+      }
+
+      return result as { success: true; profile: ClientProfile };
+    },
     onSuccess: async (data) => {
       // Invalidate and refetch client onboarding query
       await queryClient.invalidateQueries({ queryKey: onboardingKeys.client() });
@@ -56,7 +64,15 @@ export const useSaveClientOnboarding = ({
 export const useClientOnboarding = () => {
   return useQuery({
     queryKey: onboardingKeys.client(),
-    queryFn: getClientOnboarding,
+    queryFn: async () => {
+      const result = await getClientOnboardingData();
+
+      if (result.error || !result.profile) {
+        throw new Error(result.error || 'Client profile not found');
+      }
+
+      return result.profile;
+    },
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -78,7 +94,15 @@ export const useSaveFreelancerOnboarding = ({
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: FreelancerOnboardingData) => saveFreelancerOnboarding(data),
+    mutationFn: async (data: FreelancerOnboardingData) => {
+      const result = await saveFreelancerOnboarding(data);
+
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to save freelancer profile');
+      }
+
+      return result as { success: true; profile: FreelancerProfile };
+    },
     onSuccess: async (data) => {
       // Invalidate and refetch freelancer onboarding query
       await queryClient.invalidateQueries({ queryKey: onboardingKeys.freelancer() });
@@ -97,7 +121,15 @@ export const useSaveFreelancerOnboarding = ({
 export const useFreelancerOnboarding = () => {
   return useQuery({
     queryKey: onboardingKeys.freelancer(),
-    queryFn: getFreelancerOnboarding,
+    queryFn: async () => {
+      const result = await getFreelancerOnboardingData();
+
+      if (result.error || !result.profile) {
+        throw new Error(result.error || 'Freelancer profile not found');
+      }
+
+      return result.profile;
+    },
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
