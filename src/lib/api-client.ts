@@ -10,6 +10,7 @@ function authRequestInterceptor(config: InternalAxiosRequestConfig) {
   return config;
 }
 
+// ⬇⬇⬇ tahle verze je správně, tu nech
 const stripLocalePrefix = (pathname: string) =>
   pathname.replace(/^\/(en|fr)(?=\/api)/, '');
 
@@ -38,7 +39,7 @@ export const api = Axios.create({
 api.interceptors.request.use(authRequestInterceptor);
 api.interceptors.response.use(
   (response) => {
-    return response; // ← Return the full response
+    return response; // vracíme celý Axios response, ne response.data
   },
   (error) => {
     const message = error.response?.data?.message || error.message;
