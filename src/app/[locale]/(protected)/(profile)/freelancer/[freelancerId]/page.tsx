@@ -1,14 +1,23 @@
-'use client';
-
-import { useParams } from 'next/navigation';
 import { useAuth } from '@/features/auth/lib/auth-client';
 import { FreelancerProfile, useFreelancerProfile } from '@/features/profiles';
 
-export default function FreelancerProfilePage() {
-  const params = useParams();
-  const freelancerId = params.freelancerId as string;
-  const { user } = useAuth();
+interface FreelancerProfilePageProps {
+  params: Promise<{
+    freelancerId: string;
+    locale: string;
+  }>;
+}
 
+export default async function FreelancerProfilePage({ params }: FreelancerProfilePageProps) {
+  const { freelancerId } = await params;
+
+  return <FreelancerProfilePageClient freelancerId={freelancerId} />;
+}
+
+function FreelancerProfilePageClient({ freelancerId }: { freelancerId: string }) {
+  'use client';
+
+  const { user } = useAuth();
   const { data, isLoading, error } = useFreelancerProfile(freelancerId);
 
   // Check if the logged-in user is viewing their own profile

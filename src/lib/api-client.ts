@@ -10,14 +10,21 @@ function authRequestInterceptor(config: InternalAxiosRequestConfig) {
   return config;
 }
 
+const normalizeApiBaseUrl = (url: string) => {
+  if (!url) return '/api';
+  if (url.startsWith('http')) return url;
+  if (!url.startsWith('/')) return `/${url}`;
+  return url;
+};
+
 export const api = Axios.create({
-  baseURL: env.API_URL,
+  baseURL: normalizeApiBaseUrl(env.API_URL),
 });
 
 api.interceptors.request.use(authRequestInterceptor);
 api.interceptors.response.use(
   (response) => {
-    return response.data;
+    return response;
   },
   (error) => {
     const message = error.response?.data?.message || error.message;

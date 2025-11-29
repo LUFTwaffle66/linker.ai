@@ -50,17 +50,25 @@ export async function checkEmailVerified() {
  */
 export async function checkOnboardingStatus(userId: string) {
   // Check if user has a profile in either client_profiles or freelancer_profiles
-  const { data: clientProfile } = await supabase
+  const { data: clientProfile, error: clientError } = await supabase
     .from('client_profiles')
-    .select('user_id')
-    .eq('user_id', userId)
-    .single();
+    .select('clerk_user_id')
+    .eq('clerk_user_id', userId)
+    .maybeSingle();
 
-  const { data: freelancerProfile } = await supabase
+  if (clientError && clientError.code !== 'PGRST116') {
+    throw new Error(`Failed to check client profile: ${clientError.message}`);
+  }
+
+  const { data: freelancerProfile, error: freelancerError } = await supabase
     .from('freelancer_profiles')
-    .select('user_id')
-    .eq('user_id', userId)
-    .single();
+    .select('clerk_user_id')
+    .eq('clerk_user_id', userId)
+    .maybeSingle();
+
+  if (freelancerError && freelancerError.code !== 'PGRST116') {
+    throw new Error(`Failed to check freelancer profile: ${freelancerError.message}`);
+  }
 
   const hasProfile = !!(clientProfile || freelancerProfile);
 

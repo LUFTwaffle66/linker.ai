@@ -2,6 +2,21 @@ import { supabase } from '@/lib/supabase';
 import type { FreelancerDashboardData } from '../components/freelancer-dashboard';
 import type { ClientDashboardData } from '../components/client-dashboard';
 import type { ActivityItem } from '../components/recent-activity-card';
+import type { Proposal } from '@/features/proposals/types';
+
+type DashboardProposal = Proposal & {
+  total_budget: number;
+  created_at: string;
+  project_id: string;
+  status: string;
+  timeline?: string;
+  project?: {
+    id?: string;
+    title?: string;
+    client?: { full_name?: string } | null;
+  } | null;
+  freelancer?: { full_name?: string; avatar_url?: string } | null;
+};
 
 /**
  * Fetch freelancer dashboard data
@@ -11,7 +26,7 @@ export async function getFreelancerDashboard(userId: string): Promise<Freelancer
   const { data: profile } = await supabase
     .from('freelancer_profiles')
     .select('*')
-    .eq('user_id', userId)
+    .eq('clerk_user_id', userId)
     .single();
 
   // Fetch proposals
@@ -24,10 +39,12 @@ export async function getFreelancerDashboard(userId: string): Promise<Freelancer
     .eq('freelancer_id', userId)
     .order('created_at', { ascending: false });
 
+  const proposalsList = (proposals || []) as DashboardProposal[];
+
   // Calculate metrics
-  const totalProposals = proposals?.length || 0;
-  const acceptedProposals = proposals?.filter((p) => p.status === 'accepted').length || 0;
-  const pendingProposals = proposals?.filter((p) => p.status === 'submitted' || p.status === 'under_review').length || 0;
+  const totalProposals = proposalsList.length;
+  const acceptedProposals = proposalsList.filter((p) => p.status === 'accepted').length || 0;
+  const pendingProposals = proposalsList.filter((p) => p.status === 'submitted' || p.status === 'under_review').length || 0;
   const successRate = totalProposals > 0 ? Math.round((acceptedProposals / totalProposals) * 100) : 0;
 
   // Mock data for now (will be replaced with real data)
@@ -36,7 +53,7 @@ export async function getFreelancerDashboard(userId: string): Promise<Freelancer
   const completedProjects = 0; // TODO: Track completed projects
 
   // Recent proposals
-  const recentProposals = (proposals || []).slice(0, 5).map((p: any) => ({
+  const recentProposals = proposalsList.slice(0, 5).map((p: DashboardProposal) => ({
     id: p.id,
     projectTitle: p.project?.title || 'Unknown Project',
     amount: p.total_budget,
@@ -45,7 +62,7 @@ export async function getFreelancerDashboard(userId: string): Promise<Freelancer
   }));
 
   // Recent activities
-  const recentActivities: ActivityItem[] = (proposals || []).slice(0, 10).map((p: any) => ({
+  const recentActivities: ActivityItem[] = proposalsList.slice(0, 10).map((p: DashboardProposal) => ({
     id: p.id,
     title: `Proposal ${p.status}`,
     description: `Your proposal for "${p.project?.title}" was ${p.status}`,
@@ -55,10 +72,10 @@ export async function getFreelancerDashboard(userId: string): Promise<Freelancer
   }));
 
   // Active projects list (mock for now)
-  const activeProjectsList = (proposals || [])
-    .filter((p: any) => p.status === 'accepted')
+  const activeProjectsList = proposalsList
+    .filter((p: DashboardProposal) => p.status === 'accepted')
     .slice(0, 3)
-    .map((p: any) => ({
+    .map((p: DashboardProposal) => ({
       id: p.project?.id || '',
       title: p.project?.title || 'Unknown Project',
       client: p.project?.client?.full_name || 'Client',
@@ -88,7 +105,7 @@ export async function getClientDashboard(userId: string): Promise<ClientDashboar
   const { data: profile } = await supabase
     .from('client_profiles')
     .select('*')
-    .eq('user_id', userId)
+    .eq('clerk_user_id', userId)
     .single();
 
   // Fetch projects
@@ -104,23 +121,25 @@ export async function getClientDashboard(userId: string): Promise<ClientDashboar
     .eq('client_id', userId)
     .order('created_at', { ascending: false });
 
+  const projectsList = projects || [];
+
   // Calculate metrics
-  const totalProjects = projects?.length || 0;
-  const activeProjects = projects?.filter((p) => p.status === 'open' || p.status === 'in_progress').length || 0;
-  const completedProjects = projects?.filter((p) => p.status === 'completed').length || 0;
-  const allProposals = projects?.flatMap((p: any) => p.proposals || []) || [];
+  const totalProjects = projectsList.length || 0;
+  const activeProjects = projectsList.filter((p) => p.status === 'open' || p.status === 'in_progress').length || 0;
+  const completedProjects = projectsList.filter((p) => p.status === 'completed').length || 0;
+  const allProposals = (projectsList.flatMap((p) => p.proposals || []) || []) as DashboardProposal[];
   const proposalsReceived = allProposals.length;
-  const pendingProposals = allProposals.filter((p: any) => p.status === 'submitted' || p.status === 'under_review').length;
+  const pendingProposals = allProposals.filter((p: DashboardProposal) => p.status === 'submitted' || p.status === 'under_review').length;
 
   // Mock total spent calculation
   const totalSpent = completedProjects * 8000; // Mock calculation
-  const totalFreelancersHired = allProposals.filter((p: any) => p.status === 'accepted').length;
+  const totalFreelancersHired = allProposals.filter((p: DashboardProposal) => p.status === 'accepted').length;
 
   // Active projects list
-  const activeProjectsList = (projects || [])
-    .filter((p: any) => p.status === 'open' || p.status === 'in_progress')
+  const activeProjectsList = projectsList
+    .filter((p) => p.status === 'open' || p.status === 'in_progress')
     .slice(0, 3)
-    .map((p: any) => ({
+    .map((p) => ({
       id: p.id,
       title: p.title,
       budget: p.fixed_budget,
@@ -132,10 +151,10 @@ export async function getClientDashboard(userId: string): Promise<ClientDashboar
   // Recent proposals
   const recentProposalsList = allProposals
     .slice(0, 5)
-    .map((p: any) => ({
+    .map((p: DashboardProposal) => ({
       id: p.id,
       projectId: p.project_id,
-      projectTitle: projects?.find((proj: any) => proj.id === p.project_id)?.title || 'Unknown Project',
+      projectTitle: projectsList.find((proj) => proj.id === p.project_id)?.title || 'Unknown Project',
       freelancerName: p.freelancer?.full_name || 'Unknown Freelancer',
       freelancerAvatar: p.freelancer?.avatar_url,
       amount: p.total_budget,
@@ -145,7 +164,7 @@ export async function getClientDashboard(userId: string): Promise<ClientDashboar
 
   // Recent activities
   const recentActivities: ActivityItem[] = [
-    ...allProposals.slice(0, 5).map((p: any) => ({
+    ...allProposals.slice(0, 5).map((p: DashboardProposal) => ({
       id: p.id,
       title: 'New Proposal Received',
       description: `${p.freelancer?.full_name || 'A freelancer'} submitted a proposal`,
@@ -153,7 +172,7 @@ export async function getClientDashboard(userId: string): Promise<ClientDashboar
       type: 'proposal' as const,
       status: p.status,
     })),
-    ...(projects || []).slice(0, 5).map((p: any) => ({
+    ...projectsList.slice(0, 5).map((p) => ({
       id: p.id,
       title: 'Project Posted',
       description: `Your project "${p.title}" was posted`,
