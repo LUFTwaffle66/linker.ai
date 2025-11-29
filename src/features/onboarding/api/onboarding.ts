@@ -3,7 +3,7 @@ import type {
   ClientOnboardingData,
   FreelancerOnboardingData,
 } from '../lib/validations';
-import type { ClientProfile, FreelancerProfile } from '../lib/onboarding-utils';
+import type { ClientProfile } from '../lib/onboarding-utils';
 
 // =============================================
 // Client Onboarding API
@@ -26,13 +26,13 @@ export const getClientOnboarding = async (): Promise<{ profile: ClientProfile }>
 // =============================================
 
 export const saveFreelancerOnboarding = async (
-  data: FreelancerOnboardingData
-): Promise<{ success: boolean; profile: FreelancerProfile }> => {
+  data: FreelancerOnboardingData,
+): Promise<{ success: boolean; [key: string]: any }> => {
   const response = await api.post('/onboarding/freelancer', data);
   return response.data;
 };
 
-export const getFreelancerOnboarding = async (): Promise<{ profile: FreelancerProfile }> => {
+export const getFreelancerOnboarding = async (): Promise<any> => {
   const response = await api.get('/onboarding/freelancer');
   return response.data;
 };
