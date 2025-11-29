@@ -2,7 +2,6 @@
 
 import { auth, currentUser } from '@clerk/nextjs/server';
 import type { UserRole } from '@/features/auth/types/auth';
-// ⚠️ supabaseAdmin už tady nepotřebujeme, ten import SMAŽ
 
 export async function getRouteHandlerUser(): Promise<{
   id: string;
