@@ -4,8 +4,11 @@
  */
 
 import { createServerClient } from '@supabase/ssr';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { cookies } from 'next/headers';
 import type { NextRequest } from 'next/server';
+import type { UserRole } from '@/features/auth/types/auth';
+import { supabaseAdmin } from './admin';
 
 /**
  * Create Supabase client for API route handlers
@@ -40,30 +43,38 @@ export async function createRouteHandlerClient(request?: NextRequest) {
 /**
  * Get authenticated user in API route
  */
-export async function getRouteHandlerUser() {
-  const supabase = await createRouteHandlerClient();
+export async function getRouteHandlerUser(): Promise<{
+  id: string;
+  email?: string | null;
+  fullName?: string | null;
+  avatarUrl?: string | null;
+  role?: UserRole | null;
+  companyName?: string | null;
+} | null> {
+  const { userId } = await auth();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  if (!userId) return null;
 
-  if (!user) return null;
+  const clerkUser = await currentUser();
 
-  // Get full user profile from database
-  const { data: profile } = await supabase
-    .from('users')
-    .select('id, email, full_name, avatar_url, role, company_name')
-    .eq('id', user.id)
-    .single();
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('email, full_name, avatar_url, role, company_name')
+    .eq('clerk_user_id', userId)
+    .maybeSingle();
 
-  if (!profile) return null;
+  const role = (profile?.role ?? (clerkUser?.publicMetadata?.role as UserRole | undefined)) ?? null;
 
   return {
-    id: profile.id,
-    email: profile.email,
-    fullName: profile.full_name,
-    avatarUrl: profile.avatar_url,
-    role: profile.role,
-    companyName: profile.company_name,
+    id: userId,
+    email: profile?.email ?? clerkUser?.primaryEmailAddress?.emailAddress ?? null,
+    fullName:
+      profile?.full_name ??
+      (clerkUser?.firstName || clerkUser?.lastName
+        ? `${clerkUser?.firstName ?? ''} ${clerkUser?.lastName ?? ''}`.trim()
+        : clerkUser?.username ?? null),
+    avatarUrl: profile?.avatar_url ?? clerkUser?.imageUrl ?? null,
+    role,
+    companyName: profile?.company_name ?? null,
   };
 }

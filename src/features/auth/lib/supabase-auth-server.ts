@@ -1,22 +1,22 @@
-import { createClient } from '@/lib/supabase/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import type { UserRole } from '../types/auth';
 
-/**
- * Server-side Supabase Auth utilities
- * Use these in Server Components, Server Actions, and Route Handlers
- */
+function extractRole(role: unknown): UserRole {
+  if (role === 'admin' || role === 'client' || role === 'freelancer') {
+    return role;
+  }
+
+  return 'client';
+}
 
 /**
  * Get the current session on the server
  * Returns null if not authenticated
  */
 export async function getServerSession() {
-  const supabase = await createClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  return session;
+  const { sessionId } = await auth();
+  return sessionId ? { sessionId } : null;
 }
 
 /**
@@ -24,29 +24,20 @@ export async function getServerSession() {
  * Returns null if not authenticated
  */
 export async function getServerUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await currentUser();
 
   if (!user) return null;
 
-  // Get full user profile from database
-  const { data: profile } = await supabase
-    .from('users')
-    .select('id, email, full_name, avatar_url, role, company_name')
-    .eq('id', user.id)
-    .single();
-
-  if (!profile) return null;
+  const primaryEmail = user.emailAddresses?.[0]?.emailAddress ?? '';
+  const role = extractRole(user.publicMetadata.role);
 
   return {
-    id: profile.id,
-    email: profile.email,
-    fullName: profile.full_name,
-    avatarUrl: profile.avatar_url,
-    role: profile.role as UserRole,
-    companyName: profile.company_name,
+    id: user.id,
+    email: primaryEmail,
+    fullName: user.fullName || user.username || primaryEmail,
+    avatarUrl: user.imageUrl,
+    role,
+    companyName: user.publicMetadata.companyName as string | undefined,
   };
 }
 
@@ -55,11 +46,11 @@ export async function getServerUser() {
  * Redirects to login if not authenticated
  */
 export async function requireAuth(redirectTo: string = '/login') {
-  const session = await getServerSession();
-  if (!session) {
+  const { userId } = await auth();
+  if (!userId) {
     redirect(redirectTo);
   }
-  return session;
+  return userId;
 }
 
 /**
@@ -67,8 +58,8 @@ export async function requireAuth(redirectTo: string = '/login') {
  * Returns boolean
  */
 export async function isAuthenticated() {
-  const session = await getServerSession();
-  return !!session;
+  const { userId } = await auth();
+  return !!userId;
 }
 
 /**

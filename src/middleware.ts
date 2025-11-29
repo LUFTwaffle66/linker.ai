@@ -1,28 +1,47 @@
-import createMiddleware from 'next-intl/middleware';
-import { routing } from './i18n/routing';
-import { type NextRequest } from 'next/server';
-import { updateSession } from './lib/supabase/middleware';
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import createIntlMiddleware from "next-intl/middleware";
+import { NextResponse } from "next/server";
 
-const intlMiddleware = createMiddleware(routing);
+import { routing } from "./i18n/routing";
 
-export async function middleware(request: NextRequest) {
-  // First update the Supabase session
-  const supabaseResponse = await updateSession(request);
+const intlMiddleware = createIntlMiddleware(routing);
 
-  // If Supabase middleware returned a redirect, return it
-  if (supabaseResponse.status !== 200) {
-    return supabaseResponse;
+const isPublicRoute = createRouteMatcher([
+  "/:locale/(auth)(.*)",
+  "/:locale/login(.*)",
+  "/:locale/signup(.*)",
+  "/api/webhooks/clerk(.*)",
+  "/:locale",
+]);
+
+const isProtectedRoute = createRouteMatcher([
+  "/:locale/(protected)(.*)",
+  "/api/profile(.*)",
+  "/api/onboarding/(.*)",
+]);
+
+export default clerkMiddleware(async (auth, request) => {
+  const pathname = request.nextUrl.pathname;
+
+  if (pathname.startsWith("/api") || pathname.startsWith("/trpc")) {
+    if (isProtectedRoute(request) && !isPublicRoute(request)) {
+      await auth.protect();
+    }
+
+    return NextResponse.next();
   }
 
-  // Otherwise, continue with next-intl middleware
+  if (isProtectedRoute(request) && !isPublicRoute(request)) {
+    await auth.protect();
+  }
+
   return intlMiddleware(request);
-}
+});
 
 export const config = {
-  // Match all pathnames except for
-  // - … if they start with `/api`, `/_next` or `/_vercel`
-  // - … the ones containing a dot (e.g. `favicon.ico`)
   matcher: [
-    '/((?!api|_next|_vercel|.*\\..*).*)'
-  ]
+    "/((?!_next|api|trpc|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/api/(.*)",
+    "/trpc/(.*)",
+  ],
 };
