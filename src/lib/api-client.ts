@@ -10,15 +10,17 @@ function authRequestInterceptor(config: InternalAxiosRequestConfig) {
   return config;
 }
 
-const normalizeApiBaseUrl = (url: string) => {
-  if (!url) return '/api';
-  if (url.startsWith('http')) return url;
-  if (!url.startsWith('/')) return `/${url}`;
-  return url;
+const getApiBaseUrl = () => {
+  // For production with custom API domain
+  if (env.API_URL && env.API_URL.startsWith('http')) {
+    return env.API_URL;
+  }
+  // Always use /api for relative paths (no locale prefix)
+  return '/api';
 };
 
 export const api = Axios.create({
-  baseURL: normalizeApiBaseUrl(env.API_URL),
+  baseURL: getApiBaseUrl(),
 });
 
 api.interceptors.request.use(authRequestInterceptor);
