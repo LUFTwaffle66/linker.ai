@@ -58,6 +58,11 @@ export function FreelancerOnboarding({ onComplete, onSkip }: FreelancerOnboardin
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
+  const [statusMessage, setStatusMessage] = useState<
+    | { type: 'success'; text: string }
+    | { type: 'error'; text: string }
+    | null
+  >(null);
 
   const form = useForm<FreelancerOnboardingData>({
     resolver: zodResolver(freelancerOnboardingSchema) as any,
@@ -79,6 +84,7 @@ export function FreelancerOnboarding({ onComplete, onSkip }: FreelancerOnboardin
 
   const saveMutation = useSaveFreelancerOnboarding({
     onSuccess: () => {
+      setStatusMessage({ type: 'success', text: 'Profile saved successfully.' });
       toast.success('Profile created successfully! Welcome to LinkerAI');
       if (onComplete) {
         onComplete();
@@ -87,6 +93,10 @@ export function FreelancerOnboarding({ onComplete, onSkip }: FreelancerOnboardin
       }
     },
     onError: (error: Error) => {
+      setStatusMessage({
+        type: 'error',
+        text: 'Something went wrong while saving your profile.',
+      });
       toast.error(error.message || 'Failed to save profile. Please try again.');
     },
   });
@@ -201,6 +211,7 @@ export function FreelancerOnboarding({ onComplete, onSkip }: FreelancerOnboardin
   };
 
   const handleComplete = form.handleSubmit((data) => {
+    setStatusMessage(null);
     saveMutation.mutate(data);
   });
 
@@ -484,6 +495,15 @@ export function FreelancerOnboarding({ onComplete, onSkip }: FreelancerOnboardin
               </ul>
             </div>
           </div>
+        )}
+        {statusMessage && (
+          <p
+            className={`mt-6 text-sm font-medium ${
+              statusMessage.type === 'success' ? 'text-green-600' : 'text-destructive'
+            }`}
+          >
+            {statusMessage.text}
+          </p>
         )}
       </Form>
     </MultiStepForm>
