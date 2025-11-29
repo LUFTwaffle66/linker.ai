@@ -18,26 +18,43 @@ export async function createRouteHandlerClient() {
 /**
  * Get authenticated user in API route using Clerk
  */
-export async function getRouteHandlerUser() {
+export async function getRouteHandlerUser(): Promise<{
+  id: string;
+  email?: string | null;
+  fullName?: string | null;
+  avatarUrl?: string | null;
+  role?: UserRole | null;
+  companyName?: string | null;
+} | null> {
   const { userId } = await auth();
 
   if (!userId) return null;
 
-  // Get user profile from Supabase using Clerk user ID
+  // taháme profil podle Clerk user ID
   const { data: profile } = await supabaseAdmin
     .from('profiles')
-    .select('id, clerk_user_id, email, full_name, avatar_url, role, company_name')
+    .select('clerk_user_id, email, full_name, avatar_url, role, company_name')
     .eq('clerk_user_id', userId)
     .maybeSingle();
 
-  if (!profile) return null;
+  if (!profile) {
+    // profil ještě neexistuje – vrátíme aspoň ID, zbytek null
+    return {
+      id: userId,
+      email: null,
+      fullName: null,
+      avatarUrl: null,
+      role: null,
+      companyName: null,
+    };
+  }
 
   return {
-    id: profile.clerk_user_id, // Use Clerk user ID as the primary ID
-    email: profile.email,
-    fullName: profile.full_name,
-    avatarUrl: profile.avatar_url,
-    role: profile.role as UserRole,
-    companyName: profile.company_name,
+    id: profile.clerk_user_id,
+    email: profile.email ?? null,
+    fullName: profile.full_name ?? null,
+    avatarUrl: profile.avatar_url ?? null,
+    role: (profile.role as UserRole | null) ?? null,
+    companyName: profile.company_name ?? null,
   };
 }

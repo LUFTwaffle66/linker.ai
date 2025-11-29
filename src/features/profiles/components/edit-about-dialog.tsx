@@ -78,19 +78,19 @@ export function EditAboutDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>About Me</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="Describe your experience, expertise, and what you bring to projects..."
-                      className="min-h-[200px]"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    {field.value.length}/2000 characters
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    placeholder="Describe your experience, expertise, and what you bring to projects..."
+                    className="min-h-[200px]"
+                  />
+                </FormControl>
+                <FormDescription>
+                  {(field.value?.length ?? 0)}/2000 characters
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
             />
             <DialogFooter>
               <Button

@@ -1,14 +1,13 @@
 import { SignIn } from '@clerk/nextjs';
 
 type LoginPageProps = {
-  params: Promise<{ locale: string }>;
+  params: { locale: string };
 };
 
-export default async function LoginPage({ params }: LoginPageProps) {
-  const { locale } = await params;
+export default function LoginPage({ params }: LoginPageProps) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-950">
-      <SignIn routing="hash" afterSignInUrl={`/${locale}/dashboard`} />
+      <SignIn routing="hash" afterSignInUrl={`/${params.locale}/dashboard`} />
     </div>
   );
 }

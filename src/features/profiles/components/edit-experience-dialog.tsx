@@ -149,19 +149,19 @@ export function EditExperienceDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      {...field}
-                      placeholder="Describe your responsibilities, achievements, and technologies used..."
-                      className="min-h-[120px]"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    {field.value.length}/500 characters
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
+                <FormControl>
+                  <Textarea
+                    {...field}
+                    placeholder="Describe your responsibilities, achievements, and technologies used..."
+                    className="min-h-[120px]"
+                  />
+                </FormControl>
+                <FormDescription>
+                  {(field.value?.length ?? 0)}/500 characters
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
             />
 
             <DialogFooter>

@@ -10,7 +10,8 @@ import type {
 
 export interface ClientProfile {
   id: string;
-  user_id: string;
+  user_id?: string | null;
+  clerk_user_id: string | null;
   profile_image?: string;
   location?: string;
   website?: string;
@@ -34,7 +35,7 @@ export async function createClientProfile(
   const { data: profile, error } = await supabase
     .from('client_profiles')
     .insert({
-      user_id: userId,
+      clerk_user_id: userId,
       profile_image: data.profileImage || null,
       location: data.location,
       website: data.website || null,
@@ -78,7 +79,7 @@ export async function updateClientProfile(
   const { data: profile, error } = await supabase
     .from('client_profiles')
     .update(updateData)
-    .eq('user_id', userId)
+    .eq('clerk_user_id', userId)
     .select()
     .single();
 
@@ -96,7 +97,7 @@ export async function getClientProfile(
   const { data: profile, error } = await supabase
     .from('client_profiles')
     .select('*')
-    .eq('user_id', userId)
+    .eq('clerk_user_id', userId)
     .single();
 
   if (error) {
@@ -132,7 +133,8 @@ export interface WorkExperience {
 
 export interface FreelancerProfile {
   id: string;
-  user_id: string;
+  user_id?: string | null;
+  clerk_user_id: string | null;
   profile_image?: string;
   title?: string;
   location?: string;
@@ -180,7 +182,7 @@ export async function createFreelancerProfile(
   const { data: profile, error } = await supabase
     .from('freelancer_profiles')
     .insert({
-      user_id: userId,
+      clerk_user_id: userId,
       profile_image: data.profileImage || null,
       title: data.title,
       location: data.location,
@@ -242,7 +244,7 @@ export async function updateFreelancerProfile(
   const { data: profile, error } = await supabase
     .from('freelancer_profiles')
     .update(updateData)
-    .eq('user_id', userId)
+    .eq('clerk_user_id', userId)
     .select()
     .single();
 
@@ -260,7 +262,7 @@ export async function getFreelancerProfile(
   const { data: profile, error } = await supabase
     .from('freelancer_profiles')
     .select('*')
-    .eq('user_id', userId)
+    .eq('clerk_user_id', userId)
     .single();
 
   if (error) {

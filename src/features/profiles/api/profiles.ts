@@ -25,51 +25,53 @@ interface PortfolioItem {
  */
 export const getClientProfile = async (userId: string): Promise<ClientProfileData> => {
   // Fetch user data
-  const { data: user, error: userError } = await supabase
-    .from('users')
+  const { data: userProfile, error: userProfileError } = await supabase
+    .from('profiles')
     .select('*')
-    .eq('id', userId)
+    .eq('clerk_user_id', userId)
     .single();
 
-  if (userError) {
-    console.error('User fetch error:', userError);
-    throw new ApiError(404, `User not found: ${userError.message}`);
+  if (userProfileError) {
+    console.error('Profile fetch error:', userProfileError);
+    throw new ApiError(404, `User not found: ${userProfileError.message}`);
   }
 
-  if (!user) {
-    console.error('No user data returned for ID:', userId);
+  if (!userProfile) {
+    console.error('No profile data returned for clerk ID:', userId);
     throw new ApiError(404, 'User not found');
   }
 
   // Fetch client profile
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile, error: clientProfileError } = await supabase
     .from('client_profiles')
     .select('*')
-    .eq('user_id', userId)
+    .eq('clerk_user_id', userId)
     .single();
 
-  if (profileError) {
-    if (profileError.code === 'PGRST116') {
+  if (clientProfileError) {
+    if (clientProfileError.code === 'PGRST116') {
       throw new ApiError(404, 'Client profile not found');
     }
-    throw new ApiError(500, profileError.message);
+    throw new ApiError(500, clientProfileError.message);
   }
 
   // Map Supabase data to ClientProfileData type
   return {
-    id: user.id,
-    name: user.full_name,
+    id: userProfile.id ?? userId,
+    name: userProfile.full_name,
     title: 'Client',
-    company: user.company_name || '',
-    avatar: user.avatar_url || profile.profile_image || '',
+    company: userProfile.company_name || '',
+    avatar: userProfile.avatar_url || profile.profile_image || '',
     location: profile.location || '',
-    memberSince: new Date(user.created_at).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-    }),
+    memberSince: userProfile.created_at
+      ? new Date(userProfile.created_at).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+        })
+      : '',
     rating: 5.0,
     reviewCount: 0,
-    verified: user.email_verified,
+    verified: false,
     industries: profile.industry ? [profile.industry] : [],
     bio: profile.about_company || '',
     lookingFor: profile.project_goals
@@ -79,10 +81,12 @@ export const getClientProfile = async (userId: string): Promise<ClientProfileDat
         }))
       : [],
     stats: {
-      memberSince: new Date(user.created_at).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-      }),
+      memberSince: userProfile.created_at
+        ? new Date(userProfile.created_at).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+        })
+        : '',
       projectsPosted: 0, // TODO: Calculate from projects table
       totalSpent: '$0', // TODO: Calculate from payments table
       repeatExperts: '0%',
@@ -92,8 +96,8 @@ export const getClientProfile = async (userId: string): Promise<ClientProfileDat
       paymentMethodVerified: true,
       businessLicenseVerified: false,
       taxIdVerified: false,
-      phoneVerified: !!user.phone,
-      emailVerified: user.email_verified,
+      phoneVerified: false,
+      emailVerified: false,
     },
     recentActivity: [],
     pastProjects: [],
@@ -107,42 +111,42 @@ export const getClientProfile = async (userId: string): Promise<ClientProfileDat
  */
 export const getFreelancerProfile = async (userId: string): Promise<FreelancerProfileData> => {
   // Fetch user data
-  const { data: user, error: userError } = await supabase
-    .from('users')
+  const { data: userProfile, error: userProfileError } = await supabase
+    .from('profiles')
     .select('*')
-    .eq('id', userId)
+    .eq('clerk_user_id', userId)
     .single();
 
-  if (userError) {
-    console.error('User fetch error:', userError);
-    throw new ApiError(404, `User not found: ${userError.message}`);
+  if (userProfileError) {
+    console.error('User fetch error:', userProfileError);
+    throw new ApiError(404, `User not found: ${userProfileError.message}`);
   }
 
-  if (!user) {
-    console.error('No user data returned for ID:', userId);
+  if (!userProfile) {
+    console.error('No user data returned for clerk ID:', userId);
     throw new ApiError(404, 'User not found');
   }
 
   // Fetch freelancer profile
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile, error: freelancerProfileError } = await supabase
     .from('freelancer_profiles')
     .select('*')
-    .eq('user_id', userId)
+    .eq('clerk_user_id', userId)
     .single();
 
-  if (profileError) {
-    if (profileError.code === 'PGRST116') {
+  if (freelancerProfileError) {
+    if (freelancerProfileError.code === 'PGRST116') {
       throw new ApiError(404, 'Freelancer profile not found');
     }
-    throw new ApiError(500, profileError.message);
+    throw new ApiError(500, freelancerProfileError.message);
   }
 
   // Map Supabase data to FreelancerProfileData type
   return {
-    id: user.id,
-    name: user.full_name,
+    id: userProfile.id ?? userId,
+    name: userProfile.full_name,
     title: profile.title || 'AI Expert',
-    avatar: user.avatar_url || profile.profile_image || '',
+    avatar: userProfile.avatar_url || profile.profile_image || '',
     location: profile.location || '',
     timezone: 'UTC', // TODO: Add to database
     hourlyRate: {
@@ -151,7 +155,7 @@ export const getFreelancerProfile = async (userId: string): Promise<FreelancerPr
     },
     rating: 5.0,
     reviewCount: 0,
-    verified: user.email_verified,
+    verified: false,
     skills: profile.skills || [],
     bio: profile.bio || '',
     expertise: profile.skills || [],
@@ -222,9 +226,9 @@ export const updateClientProfile = async (
 
   if (Object.keys(userUpdates).length > 0) {
     const { error: userError } = await supabase
-      .from('users')
+      .from('profiles')
       .update(userUpdates)
-      .eq('id', userId);
+      .eq('clerk_user_id', userId);
 
     if (userError) {
       throw new ApiError(500, userError.message);
@@ -243,7 +247,7 @@ export const updateClientProfile = async (
     const { error: profileError } = await supabase
       .from('client_profiles')
       .update(profileUpdates)
-      .eq('user_id', userId);
+      .eq('clerk_user_id', userId);
 
     if (profileError) {
       throw new ApiError(500, profileError.message);
@@ -271,9 +275,9 @@ export const updateFreelancerProfile = async (
 
   if (Object.keys(userUpdates).length > 0) {
     const { error: userError } = await supabase
-      .from('users')
+      .from('profiles')
       .update(userUpdates)
-      .eq('id', userId);
+      .eq('clerk_user_id', userId);
 
     if (userError) {
       throw new ApiError(500, userError.message);
@@ -296,7 +300,7 @@ export const updateFreelancerProfile = async (
     const { error: profileError } = await supabase
       .from('freelancer_profiles')
       .update(profileUpdates)
-      .eq('user_id', userId);
+      .eq('clerk_user_id', userId);
 
     if (profileError) {
       throw new ApiError(500, profileError.message);
@@ -320,7 +324,7 @@ export const updateFreelancerBio = async (
   const { error } = await supabase
     .from('freelancer_profiles')
     .update({ bio, updated_at: new Date().toISOString() })
-    .eq('user_id', userId);
+    .eq('clerk_user_id', userId);
 
   if (error) {
     throw new ApiError(500, `Failed to update bio: ${error.message}`);
@@ -340,7 +344,7 @@ export const updateFreelancerSkills = async (
   const { error } = await supabase
     .from('freelancer_profiles')
     .update({ skills, updated_at: new Date().toISOString() })
-    .eq('user_id', userId);
+    .eq('clerk_user_id', userId);
 
   if (error) {
     throw new ApiError(500, `Failed to update skills: ${error.message}`);
@@ -367,7 +371,7 @@ export const addFreelancerPortfolio = async (
   const { data: profile, error: fetchError } = await supabase
     .from('freelancer_profiles')
     .select('portfolio')
-    .eq('user_id', userId)
+    .eq('clerk_user_id', userId)
     .single();
 
   if (fetchError) {
@@ -393,7 +397,7 @@ export const addFreelancerPortfolio = async (
       portfolio: updatedPortfolio,
       updated_at: new Date().toISOString(),
     })
-    .eq('user_id', userId);
+    .eq('clerk_user_id', userId);
 
   if (updateError) {
     throw new ApiError(500, `Failed to add portfolio item: ${updateError.message}`);
@@ -422,7 +426,7 @@ export const updateFreelancerPortfolio = async (
   const { data: profile, error: fetchError } = await supabase
     .from('freelancer_profiles')
     .select('portfolio')
-    .eq('user_id', userId)
+    .eq('clerk_user_id', userId)
     .single();
 
   if (fetchError) {
@@ -451,7 +455,7 @@ export const updateFreelancerPortfolio = async (
       portfolio: updatedPortfolio,
       updated_at: new Date().toISOString(),
     })
-    .eq('user_id', userId);
+    .eq('clerk_user_id', userId);
 
   if (updateError) {
     throw new ApiError(500, `Failed to update portfolio item: ${updateError.message}`);
@@ -472,7 +476,7 @@ export const deleteFreelancerPortfolio = async (
   const { data: profile, error: fetchError } = await supabase
     .from('freelancer_profiles')
     .select('portfolio')
-    .eq('user_id', userId)
+    .eq('clerk_user_id', userId)
     .single();
 
   if (fetchError) {
@@ -490,7 +494,7 @@ export const deleteFreelancerPortfolio = async (
       portfolio: updatedPortfolio,
       updated_at: new Date().toISOString(),
     })
-    .eq('user_id', userId);
+    .eq('clerk_user_id', userId);
 
   if (updateError) {
     throw new ApiError(500, `Failed to delete portfolio item: ${updateError.message}`);
@@ -516,7 +520,7 @@ export const addFreelancerExperience = async (
   const { data: profile, error: fetchError } = await supabase
     .from('freelancer_profiles')
     .select('work_experience')
-    .eq('user_id', userId)
+    .eq('clerk_user_id', userId)
     .single();
 
   if (fetchError) {
@@ -534,7 +538,7 @@ export const addFreelancerExperience = async (
       work_experience: updatedExperience,
       updated_at: new Date().toISOString(),
     })
-    .eq('user_id', userId);
+    .eq('clerk_user_id', userId);
 
   if (updateError) {
     throw new ApiError(500, `Failed to add experience: ${updateError.message}`);
@@ -554,7 +558,7 @@ export const updateClientBio = async (
   const { error } = await supabase
     .from('client_profiles')
     .update({ about_company: bio, updated_at: new Date().toISOString() })
-    .eq('user_id', userId);
+    .eq('clerk_user_id', userId);
 
   if (error) {
     throw new ApiError(500, `Failed to update bio: ${error.message}`);
