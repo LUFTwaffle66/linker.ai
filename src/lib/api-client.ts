@@ -24,7 +24,7 @@ export const api = Axios.create({
 api.interceptors.request.use(authRequestInterceptor);
 api.interceptors.response.use(
   (response) => {
-    return response;
+    return response; // ← Return the full response
   },
   (error) => {
     const message = error.response?.data?.message || error.message;
