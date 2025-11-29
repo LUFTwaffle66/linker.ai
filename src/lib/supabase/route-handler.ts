@@ -30,15 +30,20 @@ export async function getRouteHandlerUser(): Promise<{
 
   if (!userId) return null;
 
-  // taháme profil podle Clerk user ID
-  const { data: profile } = await supabaseAdmin
+  const { data: profile, error } = await supabaseAdmin
     .from('profiles')
     .select('clerk_user_id, email, full_name, avatar_url, role, company_name')
     .eq('clerk_user_id', userId)
     .maybeSingle();
 
+  // pokud je jiná chyba než "nenalezeno", logni ji
+  if (error && error.code !== 'PGRST116') {
+    console.error('getRouteHandlerUser profile error', error);
+    throw error;
+  }
+
+  // profil ještě neexistuje – vrať jen základní info
   if (!profile) {
-    // profil ještě neexistuje – vrátíme aspoň ID, zbytek null
     return {
       id: userId,
       email: null,

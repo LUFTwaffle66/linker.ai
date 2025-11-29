@@ -26,7 +26,7 @@ export async function getFreelancerDashboard(userId: string): Promise<Freelancer
   const { data: profile } = await supabase
     .from('freelancer_profiles')
     .select('*')
-    .eq('user_id', userId)
+    .eq('clerk_user_id', userId)
     .single();
 
   // Fetch proposals
@@ -105,7 +105,7 @@ export async function getClientDashboard(userId: string): Promise<ClientDashboar
   const { data: profile } = await supabase
     .from('client_profiles')
     .select('*')
-    .eq('user_id', userId)
+    .eq('clerk_user_id', userId)
     .single();
 
   // Fetch projects
