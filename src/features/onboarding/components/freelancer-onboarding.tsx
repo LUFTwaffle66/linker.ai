@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from '@/i18n/routing';
+import { usePathname, useRouter } from '@/i18n/routing';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -56,6 +56,8 @@ const aiSkills = [
 
 export function FreelancerOnboarding({ onComplete, onSkip }: FreelancerOnboardingProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const locale = pathname?.split('/')[1] || 'en';
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
   const [statusMessage, setStatusMessage] = useState<
@@ -89,7 +91,7 @@ export function FreelancerOnboarding({ onComplete, onSkip }: FreelancerOnboardin
       if (onComplete) {
         onComplete();
       } else {
-        router.push(paths.app.dashboard.getHref());
+        router.push(`/${locale}${paths.app.dashboard.getHref()}`);
       }
     },
     onError: (error: Error) => {
@@ -219,7 +221,7 @@ export function FreelancerOnboarding({ onComplete, onSkip }: FreelancerOnboardin
     if (onSkip) {
       onSkip();
     } else {
-      router.push(paths.app.dashboard.getHref());
+      router.push(`/${locale}${paths.app.dashboard.getHref()}`);
     }
   };
 
