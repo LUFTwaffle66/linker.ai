@@ -1,5 +1,20 @@
+import { redirect } from 'next/navigation';
+import { ensureUserRole } from '@/features/onboarding/actions';
 import { FreelancerOnboarding } from '@/features/onboarding/components/freelancer-onboarding';
 
-export default function FreelancerOnboardingPage() {
+type FreelancerOnboardingPageProps = {
+  params: { locale: string };
+};
+
+export default async function FreelancerOnboardingPage({
+  params,
+}: FreelancerOnboardingPageProps) {
+  const locale = params.locale;
+  const result = await ensureUserRole('freelancer');
+
+  if (!result.success) {
+    redirect(`/${locale}/login?redirectTo=/${locale}/onboarding/freelancer`);
+  }
+
   return <FreelancerOnboarding />;
 }

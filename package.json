@@ -11,6 +11,7 @@
     "dev": "next dev --turbo",
     "dev:webpack": "NEXT_DISABLE_TURBOPACK=1 next dev",
 
+    "lint": "next lint",
     "check": "biome check .",
     "check:write": "biome check --write .",
     "check:unsafe": "biome check --write --unsafe .",
@@ -87,6 +88,10 @@
 
     "@types/node": "^20.14.10",
     "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0"
+    "@types/react-dom": "^19.0.0",
+    "@next/eslint-plugin-next": "^15.2.3",
+    "@typescript-eslint/parser": "^8.19.1",
+    "eslint": "^9.17.0",
+    "globals": "^15.12.0"
   }
 }

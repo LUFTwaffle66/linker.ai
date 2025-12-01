@@ -13,10 +13,11 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { paths } from '@/config/paths';
 
 interface LandingPageProps {
+  locale?: string;
   onNavigate?: (screen: string) => void;
 }
 
-export function LandingPage({ onNavigate }: LandingPageProps) {
+export function LandingPage({ locale = 'en', onNavigate }: LandingPageProps) {
   const router = useRouter();
 
   const handleNavigate = (screen: string, params?: { tab?: string; q?: string }) => {
@@ -42,6 +43,10 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
           router.push('/');
       }
     }
+  };
+
+  const handleRoleSelect = (role: 'freelancer' | 'client') => {
+    router.push(`/${locale}/signup?type=${role}`);
   };
 
   const categories = [
@@ -215,6 +220,37 @@ export function LandingPage({ onNavigate }: LandingPageProps) {
               <Button variant="outline" size="lg" className="h-12 px-8" onClick={() => handleNavigate('browse-projects')}>
                 Find Projects
               </Button>
+            </div>
+
+            <div className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+              <Card className="border-primary/20">
+                <CardContent className="p-6 flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-primary" />
+                    <div>
+                      <h3 className="text-lg font-semibold">I'm a freelancer</h3>
+                      <p className="text-muted-foreground text-sm">Find high-value AI projects and showcase your expertise.</p>
+                    </div>
+                  </div>
+                  <Button className="w-full" onClick={() => handleRoleSelect('freelancer')}>
+                    Start as a freelancer
+                  </Button>
+                </CardContent>
+              </Card>
+              <Card className="border-primary/20">
+                <CardContent className="p-6 flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-primary" />
+                    <div>
+                      <h3 className="text-lg font-semibold">I'm a client</h3>
+                      <p className="text-muted-foreground text-sm">Hire vetted AI talent and launch your next automation project.</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="w-full" onClick={() => handleRoleSelect('client')}>
+                    Start as a client
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
