@@ -10,6 +10,7 @@ export default function SignupPage({ params, searchParams }: SignupPageProps) {
   const typeParam = searchParams?.type;
   const type = Array.isArray(typeParam) ? typeParam[0] : typeParam;
   const userType = type === 'client' ? 'client' : 'freelancer';
+
   const afterSignUpUrl = `/${locale}/onboarding/${userType}`;
 
   return (
