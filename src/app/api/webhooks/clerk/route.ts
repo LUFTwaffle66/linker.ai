@@ -1,7 +1,7 @@
 import { Webhook } from 'svix';
 import { headers } from 'next/headers';
 import type { WebhookEvent } from '@clerk/nextjs/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { upsertProfileFromClerk } from '@/lib/profiles';
 
 export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
@@ -49,42 +49,17 @@ export async function POST(req: Request) {
   // Handle the webhook
   const eventType = evt.type;
 
-  if (eventType === 'user.created') {
-    const { id, email_addresses, first_name, last_name, image_url, public_metadata } = evt.data;
+  if (eventType === 'user.created' || eventType === 'user.updated') {
+    const clerkUserId = evt.data.id;
 
-    // Create profile in Supabase
-    const { error } = await supabaseAdmin.from('profiles').insert({
-      clerk_user_id: id,
-      email: email_addresses[0]?.email_address,
-      full_name: first_name && last_name ? `${first_name} ${last_name}` : null,
-      avatar_url: image_url,
-      role: (public_metadata?.role as string) || null,
-    });
+    const { error } = await upsertProfileFromClerk(clerkUserId, evt.data as any);
 
     if (error) {
-      console.error('Error creating profile:', error);
-      return new Response('Error: Failed to create profile', {
+      console.error('Error syncing profile from webhook:', error);
+
+      return new Response('Error: Failed to sync profile', {
         status: 500,
       });
-    }
-  }
-
-  if (eventType === 'user.updated') {
-    const { id, email_addresses, first_name, last_name, image_url, public_metadata } = evt.data;
-
-    // Update profile in Supabase
-    const { error } = await supabaseAdmin
-      .from('profiles')
-      .update({
-        email: email_addresses[0]?.email_address,
-        full_name: first_name && last_name ? `${first_name} ${last_name}` : null,
-        avatar_url: image_url,
-        role: (public_metadata?.role as string) || null,
-      })
-      .eq('clerk_user_id', id);
-
-    if (error) {
-      console.error('Error updating profile:', error);
     }
   }
 

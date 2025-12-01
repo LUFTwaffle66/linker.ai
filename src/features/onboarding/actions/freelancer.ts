@@ -40,11 +40,25 @@ export async function saveFreelancerOnboarding(
     }
 
     const supabase = await createRouteHandlerClient();
-    const existingProfile = await getFreelancerProfile(supabase, currentUser.id);
+    const existingProfile = await getFreelancerProfile(
+      supabase,
+      currentUser.profileId,
+      currentUser.clerkId,
+    );
 
     const profile = existingProfile
-      ? await updateFreelancerProfile(supabase, currentUser.id, validationResult.data)
-      : await createFreelancerProfile(supabase, currentUser.id, validationResult.data);
+      ? await updateFreelancerProfile(
+          supabase,
+          currentUser.profileId,
+          currentUser.clerkId,
+          validationResult.data,
+        )
+      : await createFreelancerProfile(
+          supabase,
+          currentUser.profileId,
+          currentUser.clerkId,
+          validationResult.data,
+        );
 
     revalidatePath('/dashboard');
     revalidatePath('/onboarding');
@@ -58,7 +72,7 @@ export async function saveFreelancerOnboarding(
     const fallbackProfile = currentUser
       ? {
           id: `fallback-${timestamp}`,
-          clerk_user_id: currentUser.id,
+          clerk_user_id: currentUser.clerkId,
           profile_image: formData.profileImage || null,
           title: formData.title,
           location: formData.location,
@@ -97,7 +111,7 @@ export async function getFreelancerOnboardingData(): Promise<{
     }
 
     const supabase = await createRouteHandlerClient();
-    const profile = await getFreelancerProfile(supabase, user.id);
+    const profile = await getFreelancerProfile(supabase, user.profileId, user.clerkId);
 
     if (!profile) {
       return { error: 'Profile not found' };
