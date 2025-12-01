@@ -30,6 +30,30 @@ export async function createClient() {
     }
   };
 
+  const sanitizeSupabaseCookies = () => {
+    const authCookies = cookieStore
+      .getAll()
+      .filter(
+        ({ name }) =>
+          name.startsWith('sb-') ||
+          name.includes('supabase-auth-token') ||
+          name.includes('supabase-session'),
+      );
+
+    for (const cookie of authCookies) {
+      try {
+        JSON.parse(cookie.value);
+      } catch (error) {
+        console.warn('Removing invalid Supabase auth cookie', cookie.name, error);
+        try {
+          cookieStore.set(cookie.name, '', { path: '/', maxAge: 0 });
+        } catch (setError) {
+          console.warn('Unable to clear Supabase auth cookie', cookie.name, setError);
+        }
+      }
+    }
+  };
+
   const getClient = () =>
     createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -55,6 +79,7 @@ export async function createClient() {
     );
 
   try {
+    sanitizeSupabaseCookies();
     return getClient();
   } catch (error) {
     if (error instanceof SyntaxError) {
