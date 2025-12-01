@@ -24,27 +24,19 @@ interface PortfolioItem {
  * @returns Promise<ClientProfileData>
  */
 export const getClientProfile = async (userId: string): Promise<ClientProfileData> => {
-  // Fetch user data
-  const { data: userProfile, error: userProfileError } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('clerk_user_id', userId)
-    .single();
-
-  if (userProfileError) {
-    console.error('Profile fetch error:', userProfileError);
-    throw new ApiError(404, `User not found: ${userProfileError.message}`);
-  }
-
-  if (!userProfile) {
-    console.error('No profile data returned for clerk ID:', userId);
-    throw new ApiError(404, 'User not found');
-  }
-
-  // Fetch client profile
+  // Fetch client profile with linked user data
   const { data: profile, error: clientProfileError } = await supabase
     .from('client_profiles')
-    .select('*')
+    .select(
+      `*,
+      user:users!client_profiles_user_id_fkey(
+        id,
+        full_name,
+        company_name,
+        avatar_url,
+        created_at
+      )`,
+    )
     .eq('clerk_user_id', userId)
     .single();
 
@@ -57,14 +49,14 @@ export const getClientProfile = async (userId: string): Promise<ClientProfileDat
 
   // Map Supabase data to ClientProfileData type
   return {
-    id: userProfile.id ?? userId,
-    name: userProfile.full_name,
+    id: profile.user?.id ?? userId,
+    name: profile.user?.full_name ?? '',
     title: 'Client',
-    company: userProfile.company_name || '',
-    avatar: userProfile.avatar_url || profile.profile_image || '',
+    company: profile.user?.company_name || '',
+    avatar: profile.user?.avatar_url || profile.profile_image || '',
     location: profile.location || '',
-    memberSince: userProfile.created_at
-      ? new Date(userProfile.created_at).toLocaleDateString('en-US', {
+    memberSince: profile.user?.created_at
+      ? new Date(profile.user.created_at).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'long',
         })
@@ -81,8 +73,8 @@ export const getClientProfile = async (userId: string): Promise<ClientProfileDat
         }))
       : [],
     stats: {
-      memberSince: userProfile.created_at
-        ? new Date(userProfile.created_at).toLocaleDateString('en-US', {
+      memberSince: profile.user?.created_at
+        ? new Date(profile.user.created_at).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'long',
         })
@@ -109,28 +101,21 @@ export const getClientProfile = async (userId: string): Promise<ClientProfileDat
  * @param userId - The user ID to fetch profile for
  * @returns Promise<FreelancerProfileData>
  */
-export const getFreelancerProfile = async (userId: string): Promise<FreelancerProfileData> => {
-  // Fetch user data
-  const { data: userProfile, error: userProfileError } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('clerk_user_id', userId)
-    .single();
-
-  if (userProfileError) {
-    console.error('User fetch error:', userProfileError);
-    throw new ApiError(404, `User not found: ${userProfileError.message}`);
-  }
-
-  if (!userProfile) {
-    console.error('No user data returned for clerk ID:', userId);
-    throw new ApiError(404, 'User not found');
-  }
-
-  // Fetch freelancer profile
+export const getFreelancerProfile = async (
+  userId: string,
+): Promise<FreelancerProfileData> => {
+  // Fetch freelancer profile with linked user data
   const { data: profile, error: freelancerProfileError } = await supabase
     .from('freelancer_profiles')
-    .select('*')
+    .select(
+      `*,
+      user:users!freelancer_profiles_user_id_fkey(
+        id,
+        full_name,
+        avatar_url,
+        created_at
+      )`,
+    )
     .eq('clerk_user_id', userId)
     .single();
 
@@ -143,10 +128,10 @@ export const getFreelancerProfile = async (userId: string): Promise<FreelancerPr
 
   // Map Supabase data to FreelancerProfileData type
   return {
-    id: userProfile.id ?? userId,
-    name: userProfile.full_name,
+    id: profile.user?.id ?? userId,
+    name: profile.user?.full_name ?? '',
     title: profile.title || 'AI Expert',
-    avatar: userProfile.avatar_url || profile.profile_image || '',
+    avatar: profile.user?.avatar_url || profile.profile_image || '',
     location: profile.location || '',
     timezone: 'UTC', // TODO: Add to database
     hourlyRate: {
@@ -218,6 +203,20 @@ export const updateClientProfile = async (
   userId: string,
   data: Partial<ClientProfileData>
 ): Promise<ClientProfileData> => {
+  const { data: existingProfile, error: existingProfileError } = await supabase
+    .from('client_profiles')
+    .select('user_id')
+    .eq('clerk_user_id', userId)
+    .single();
+
+  if (existingProfileError) {
+    throw new ApiError(500, existingProfileError.message);
+  }
+
+  if (!existingProfile) {
+    throw new ApiError(404, 'Client profile not found');
+  }
+
   // Update user table if needed
   const userUpdates: Record<string, any> = {};
   if (data.name !== undefined) userUpdates.full_name = data.name;
@@ -226,9 +225,9 @@ export const updateClientProfile = async (
 
   if (Object.keys(userUpdates).length > 0) {
     const { error: userError } = await supabase
-      .from('profiles')
+      .from('users')
       .update(userUpdates)
-      .eq('clerk_user_id', userId);
+      .eq('id', existingProfile?.user_id);
 
     if (userError) {
       throw new ApiError(500, userError.message);
@@ -268,6 +267,20 @@ export const updateFreelancerProfile = async (
   userId: string,
   data: Partial<FreelancerProfileData>
 ): Promise<FreelancerProfileData> => {
+  const { data: existingProfile, error: existingProfileError } = await supabase
+    .from('freelancer_profiles')
+    .select('user_id')
+    .eq('clerk_user_id', userId)
+    .single();
+
+  if (existingProfileError) {
+    throw new ApiError(500, existingProfileError.message);
+  }
+
+  if (!existingProfile) {
+    throw new ApiError(404, 'Freelancer profile not found');
+  }
+
   // Update user table if needed
   const userUpdates: Record<string, any> = {};
   if (data.name !== undefined) userUpdates.full_name = data.name;
@@ -275,9 +288,9 @@ export const updateFreelancerProfile = async (
 
   if (Object.keys(userUpdates).length > 0) {
     const { error: userError } = await supabase
-      .from('profiles')
+      .from('users')
       .update(userUpdates)
-      .eq('clerk_user_id', userId);
+      .eq('id', existingProfile?.user_id);
 
     if (userError) {
       throw new ApiError(500, userError.message);
