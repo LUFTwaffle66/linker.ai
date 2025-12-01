@@ -29,13 +29,15 @@ export interface ClientProfile {
 
 export async function createClientProfile(
   supabase: SupabaseClient,
-  userId: string,
-  data: ClientOnboardingData
+  profileId: string | null,
+  clerkUserId: string,
+  data: ClientOnboardingData,
 ): Promise<ClientProfile> {
   const { data: profile, error } = await supabase
     .from('client_profiles')
     .insert({
-      clerk_user_id: userId,
+      ...(profileId ? { user_id: profileId } : {}),
+      clerk_user_id: clerkUserId,
       profile_image: data.profileImage || null,
       location: data.location,
       website: data.website || null,
@@ -60,8 +62,9 @@ export async function createClientProfile(
 
 export async function updateClientProfile(
   supabase: SupabaseClient,
-  userId: string,
-  data: Partial<ClientOnboardingData>
+  profileId: string | null,
+  clerkUserId: string,
+  data: Partial<ClientOnboardingData>,
 ): Promise<ClientProfile> {
   const updateData: Record<string, unknown> = {};
 
@@ -79,7 +82,7 @@ export async function updateClientProfile(
   const { data: profile, error } = await supabase
     .from('client_profiles')
     .update(updateData)
-    .eq('clerk_user_id', userId)
+    .eq(profileId ? 'user_id' : 'clerk_user_id', profileId ?? clerkUserId)
     .select()
     .single();
 
@@ -92,12 +95,13 @@ export async function updateClientProfile(
 
 export async function getClientProfile(
   supabase: SupabaseClient,
-  userId: string
+  profileId: string | null,
+  clerkUserId: string,
 ): Promise<ClientProfile | null> {
   const { data: profile, error } = await supabase
     .from('client_profiles')
     .select('*')
-    .eq('clerk_user_id', userId)
+    .eq(profileId ? 'user_id' : 'clerk_user_id', profileId ?? clerkUserId)
     .single();
 
   if (error) {
@@ -151,8 +155,9 @@ export interface FreelancerProfile {
 
 export async function createFreelancerProfile(
   supabase: SupabaseClient,
-  userId: string,
-  data: FreelancerOnboardingData
+  profileId: string | null,
+  clerkUserId: string,
+  data: FreelancerOnboardingData,
 ): Promise<FreelancerProfile> {
   // Prepare portfolio data - support both new array format and old single-item format
   let portfolioData: PortfolioItem[] = [];
@@ -182,7 +187,8 @@ export async function createFreelancerProfile(
   const { data: profile, error } = await supabase
     .from('freelancer_profiles')
     .insert({
-      clerk_user_id: userId,
+      ...(profileId ? { user_id: profileId } : {}),
+      clerk_user_id: clerkUserId,
       profile_image: data.profileImage || null,
       title: data.title,
       location: data.location,
@@ -205,8 +211,9 @@ export async function createFreelancerProfile(
 
 export async function updateFreelancerProfile(
   supabase: SupabaseClient,
-  userId: string,
-  data: Partial<FreelancerOnboardingData>
+  profileId: string | null,
+  clerkUserId: string,
+  data: Partial<FreelancerOnboardingData>,
 ): Promise<FreelancerProfile> {
   const updateData: Record<string, unknown> = {};
 
@@ -244,7 +251,7 @@ export async function updateFreelancerProfile(
   const { data: profile, error } = await supabase
     .from('freelancer_profiles')
     .update(updateData)
-    .eq('clerk_user_id', userId)
+    .eq(profileId ? 'user_id' : 'clerk_user_id', profileId ?? clerkUserId)
     .select()
     .single();
 
@@ -257,12 +264,13 @@ export async function updateFreelancerProfile(
 
 export async function getFreelancerProfile(
   supabase: SupabaseClient,
-  userId: string
+  profileId: string | null,
+  clerkUserId: string,
 ): Promise<FreelancerProfile | null> {
   const { data: profile, error } = await supabase
     .from('freelancer_profiles')
     .select('*')
-    .eq('clerk_user_id', userId)
+    .eq(profileId ? 'user_id' : 'clerk_user_id', profileId ?? clerkUserId)
     .single();
 
   if (error) {

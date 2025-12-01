@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { fetchProfileByClerkId, updateProfileByClerkId } from '@/lib/profiles';
 
 export async function GET() {
   const { userId } = await auth();
@@ -9,11 +9,7 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { data: profile, error } = await supabaseAdmin
-    .from('profiles')
-    .select('*')
-    .eq('clerk_user_id', userId)
-    .maybeSingle();
+  const { data: profile, error } = await fetchProfileByClerkId(userId);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -43,15 +39,14 @@ export async function PATCH(request: Request) {
   if (payload.role !== undefined) updates.role = payload.role;
   if (payload.avatarUrl !== undefined) updates.avatar_url = payload.avatarUrl;
 
-  const { data: profile, error } = await supabaseAdmin
-    .from('profiles')
-    .update(updates)
-    .eq('clerk_user_id', userId)
-    .select()
-    .single();
+  const { data: profile, error } = await updateProfileByClerkId(userId, updates);
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  if (!profile) {
+    return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
   }
 
   return NextResponse.json({ profile });

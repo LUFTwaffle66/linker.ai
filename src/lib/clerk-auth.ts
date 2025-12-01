@@ -1,5 +1,5 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { supabaseAdmin } from './supabase/admin';
+import { upsertProfileFromClerk } from './profiles';
 import type { UserRole } from '@/features/auth/types/auth';
 
 export interface ClerkProfile {
@@ -18,11 +18,7 @@ export async function getCurrentUser() {
 
   const clerkUser = await currentUser();
 
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('*')
-    .eq('clerk_user_id', userId)
-    .maybeSingle();
+  const { profile } = await upsertProfileFromClerk(userId, clerkUser);
 
   return {
     clerkUser,

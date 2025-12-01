@@ -38,11 +38,25 @@ export async function saveClientOnboarding(
     }
 
     const supabase = await createRouteHandlerClient();
-    const existingProfile = await getClientProfile(supabase, user.id);
+    const existingProfile = await getClientProfile(
+      supabase,
+      user.profileId,
+      user.clerkId,
+    );
 
     const profile = existingProfile
-      ? await updateClientProfile(supabase, user.id, validationResult.data)
-      : await createClientProfile(supabase, user.id, validationResult.data);
+      ? await updateClientProfile(
+          supabase,
+          user.profileId,
+          user.clerkId,
+          validationResult.data,
+        )
+      : await createClientProfile(
+          supabase,
+          user.profileId,
+          user.clerkId,
+          validationResult.data,
+        );
 
     revalidatePath('/dashboard');
     revalidatePath('/onboarding');
@@ -73,7 +87,7 @@ export async function getClientOnboardingData(): Promise<{
     }
 
     const supabase = await createRouteHandlerClient();
-    const profile = await getClientProfile(supabase, user.id);
+    const profile = await getClientProfile(supabase, user.profileId, user.clerkId);
 
     if (!profile) {
       return { error: 'Profile not found' };
