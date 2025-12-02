@@ -13,6 +13,14 @@ export default async function FreelancerOnboardingPage({
   const result = await ensureUserRole('freelancer');
 
   if (!result.success) {
+    if (result.error === 'Unauthorized') {
+      redirect(`/${locale}/login?redirectTo=/${locale}/onboarding/freelancer`);
+    }
+
+    throw new Error(`Unable to set user role: ${result.error}`);
+  }
+
+  if (result.role !== 'freelancer') {
     redirect(`/${locale}/login?redirectTo=/${locale}/onboarding/freelancer`);
   }
 
