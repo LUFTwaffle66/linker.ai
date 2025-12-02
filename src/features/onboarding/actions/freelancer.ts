@@ -73,7 +73,7 @@ export async function saveFreelancerOnboarding(
       ? {
           id: `fallback-${timestamp}`,
           clerk_user_id: currentUser.clerkId,
-          profile_image: formData.profileImage || null,
+          profile_image: formData.profileImage || undefined,
           title: formData.title,
           location: formData.location,
           bio: formData.bio,

@@ -24,7 +24,8 @@ export async function ensureUserRole(role: UserRole) {
 
   if (existingRole !== role) {
     try {
-      await clerkClient.users.updateUserMetadata(userId, {
+      const client = await clerkClient();
+      await client.users.updateUserMetadata(userId, {
         publicMetadata: {
           ...(user.publicMetadata ?? {}),
           role,

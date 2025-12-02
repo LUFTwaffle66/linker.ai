@@ -3,11 +3,11 @@ import { ensureUserRole } from '@/features/onboarding/actions';
 import { ClientOnboarding } from '@/features/onboarding/components/client-onboarding';
 
 type ClientOnboardingPageProps = {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 };
 
 export default async function ClientOnboardingPage({ params }: ClientOnboardingPageProps) {
-  const locale = params.locale;
+  const { locale } = await params;
   const result = await ensureUserRole('client');
 
   if (!result.success) {

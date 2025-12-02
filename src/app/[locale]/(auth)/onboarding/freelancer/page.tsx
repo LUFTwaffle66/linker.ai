@@ -3,13 +3,13 @@ import { ensureUserRole } from '@/features/onboarding/actions';
 import { FreelancerOnboarding } from '@/features/onboarding/components/freelancer-onboarding';
 
 type FreelancerOnboardingPageProps = {
-  params: { locale: string };
+  params: Promise<{ locale: string }>;
 };
 
 export default async function FreelancerOnboardingPage({
   params,
 }: FreelancerOnboardingPageProps) {
-  const locale = params.locale;
+  const { locale } = await params;
   const result = await ensureUserRole('freelancer');
 
   if (!result.success) {
