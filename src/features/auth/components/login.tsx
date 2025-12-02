@@ -7,8 +7,7 @@ import { LanguageSwitcherCompact } from '@/components/language-switcher-compact'
 export function Login() {
   const params = useParams<{ locale: string }>();
   const locale = params?.locale ?? 'en';
-  const afterSignInUrl = `/${locale}/dashboard`;
-  const afterSignUpUrl = `/${locale}/signup`;
+  const fallbackRedirectUrl = `/${locale}/dashboard`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-cyan-500/5 flex items-center justify-center px-4 py-8">
@@ -19,9 +18,8 @@ export function Login() {
       <SignIn
         routing="path"
         path={`/${locale}/login`}
-        afterSignInUrl={afterSignInUrl}
+        fallbackRedirectUrl={fallbackRedirectUrl}
         signUpUrl={`/${locale}/signup`}
-        afterSignUpUrl={afterSignUpUrl}
         appearance={{
           elements: {
             rootBox: 'w-full max-w-md',

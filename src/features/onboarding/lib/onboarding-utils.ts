@@ -34,21 +34,11 @@ export async function createClientProfile(
   data: ClientOnboardingData,
 ): Promise<ClientProfile> {
   const { data: profile, error } = await supabase
-    .from('client_profiles')
+    .from('profiles')
     .insert({
-      ...(profileId ? { user_id: profileId } : {}),
       clerk_user_id: clerkUserId,
-      profile_image: data.profileImage || null,
-      location: data.location,
-      website: data.website || null,
-      industry: data.industry,
-      company_size: data.companySize,
-      about_company: data.aboutCompany,
-      project_goals: data.projectGoals,
-      project_description: data.projectDescription || null,
-      budget_range: data.budgetRange,
-      timeline: data.timeline,
-      onboarding_completed: true,
+      avatar_url: data.profileImage || null,
+      role: 'client',
     })
     .select()
     .single();
@@ -57,7 +47,7 @@ export async function createClientProfile(
     throw new Error(`Failed to create client profile: ${error.message}`);
   }
 
-  return profile;
+  return profile as any;
 }
 
 export async function updateClientProfile(
@@ -68,21 +58,13 @@ export async function updateClientProfile(
 ): Promise<ClientProfile> {
   const updateData: Record<string, unknown> = {};
 
-  if (data.profileImage !== undefined) updateData.profile_image = data.profileImage;
-  if (data.location !== undefined) updateData.location = data.location;
-  if (data.website !== undefined) updateData.website = data.website;
-  if (data.industry !== undefined) updateData.industry = data.industry;
-  if (data.companySize !== undefined) updateData.company_size = data.companySize;
-  if (data.aboutCompany !== undefined) updateData.about_company = data.aboutCompany;
-  if (data.projectGoals !== undefined) updateData.project_goals = data.projectGoals;
-  if (data.projectDescription !== undefined) updateData.project_description = data.projectDescription;
-  if (data.budgetRange !== undefined) updateData.budget_range = data.budgetRange;
-  if (data.timeline !== undefined) updateData.timeline = data.timeline;
+  if (data.profileImage !== undefined) updateData.avatar_url = data.profileImage;
 
   const { data: profile, error } = await supabase
-    .from('client_profiles')
+    .from('profiles')
     .update(updateData)
-    .eq(profileId ? 'user_id' : 'clerk_user_id', profileId ?? clerkUserId)
+    .eq('clerk_user_id', clerkUserId)
+    .eq('role', 'client')
     .select()
     .single();
 
@@ -90,7 +72,7 @@ export async function updateClientProfile(
     throw new Error(`Failed to update client profile: ${error.message}`);
   }
 
-  return profile;
+  return profile as any;
 }
 
 export async function getClientProfile(
@@ -99,20 +81,20 @@ export async function getClientProfile(
   clerkUserId: string,
 ): Promise<ClientProfile | null> {
   const { data: profile, error } = await supabase
-    .from('client_profiles')
+    .from('profiles')
     .select('*')
-    .eq(profileId ? 'user_id' : 'clerk_user_id', profileId ?? clerkUserId)
+    .eq('clerk_user_id', clerkUserId)
+    .eq('role', 'client')
     .single();
 
   if (error) {
     if (error.code === 'PGRST116') {
-      // No rows returned
       return null;
     }
     throw new Error(`Failed to get client profile: ${error.message}`);
   }
 
-  return profile;
+  return profile as any;
 }
 
 // =============================================
@@ -159,45 +141,12 @@ export async function createFreelancerProfile(
   clerkUserId: string,
   data: FreelancerOnboardingData,
 ): Promise<FreelancerProfile> {
-  // Prepare portfolio data - support both new array format and old single-item format
-  let portfolioData: PortfolioItem[] = [];
-
-  if (data.portfolio && data.portfolio.length > 0) {
-    // New format: array of portfolio items
-    portfolioData = data.portfolio.map(item => ({
-      id: crypto.randomUUID(),
-      title: item.title,
-      description: item.description,
-      tags: item.tags,
-      imageUrl: item.imageUrl || undefined,
-      url: item.url || undefined,
-    }));
-  } else if (data.portfolioTitle && data.portfolioDescription) {
-    // Old format: single portfolio item (backward compatibility)
-    portfolioData = [{
-      id: crypto.randomUUID(),
-      title: data.portfolioTitle,
-      description: data.portfolioDescription,
-      tags: data.portfolioTags || [],
-      imageUrl: undefined,
-      url: undefined,
-    }];
-  }
-
   const { data: profile, error } = await supabase
-    .from('freelancer_profiles')
+    .from('profiles')
     .insert({
-      ...(profileId ? { user_id: profileId } : {}),
       clerk_user_id: clerkUserId,
-      profile_image: data.profileImage || null,
-      title: data.title,
-      location: data.location,
-      bio: data.bio,
-      experience: parseInt(data.experience),
-      skills: data.skills,
-      portfolio: portfolioData.length > 0 ? portfolioData : [],
-      hourly_rate: parseFloat(data.hourlyRate),
-      onboarding_completed: true,
+      avatar_url: data.profileImage || null,
+      role: 'freelancer',
     })
     .select()
     .single();
@@ -206,7 +155,7 @@ export async function createFreelancerProfile(
     throw new Error(`Failed to create freelancer profile: ${error.message}`);
   }
 
-  return profile;
+  return profile as any;
 }
 
 export async function updateFreelancerProfile(
@@ -217,41 +166,13 @@ export async function updateFreelancerProfile(
 ): Promise<FreelancerProfile> {
   const updateData: Record<string, unknown> = {};
 
-  if (data.profileImage !== undefined) updateData.profile_image = data.profileImage;
-  if (data.title !== undefined) updateData.title = data.title;
-  if (data.location !== undefined) updateData.location = data.location;
-  if (data.bio !== undefined) updateData.bio = data.bio;
-  if (data.experience !== undefined) updateData.experience = parseInt(data.experience);
-  if (data.skills !== undefined) updateData.skills = data.skills;
-  if (data.hourlyRate !== undefined) updateData.hourly_rate = parseFloat(data.hourlyRate);
-
-  // Handle portfolio updates - support both new array format and old single-item format
-  if (data.portfolio !== undefined && data.portfolio.length > 0) {
-    // New format: array of portfolio items
-    updateData.portfolio = data.portfolio.map(item => ({
-      id: crypto.randomUUID(),
-      title: item.title,
-      description: item.description,
-      tags: item.tags,
-      imageUrl: item.imageUrl || undefined,
-      url: item.url || undefined,
-    }));
-  } else if (data.portfolioTitle !== undefined && data.portfolioDescription !== undefined) {
-    // Old format: convert single portfolio item to array format
-    updateData.portfolio = [{
-      id: crypto.randomUUID(),
-      title: data.portfolioTitle,
-      description: data.portfolioDescription,
-      tags: data.portfolioTags || [],
-      imageUrl: undefined,
-      url: undefined,
-    }];
-  }
+  if (data.profileImage !== undefined) updateData.avatar_url = data.profileImage;
 
   const { data: profile, error } = await supabase
-    .from('freelancer_profiles')
+    .from('profiles')
     .update(updateData)
-    .eq(profileId ? 'user_id' : 'clerk_user_id', profileId ?? clerkUserId)
+    .eq('clerk_user_id', clerkUserId)
+    .eq('role', 'freelancer')
     .select()
     .single();
 
@@ -259,7 +180,7 @@ export async function updateFreelancerProfile(
     throw new Error(`Failed to update freelancer profile: ${error.message}`);
   }
 
-  return profile;
+  return profile as any;
 }
 
 export async function getFreelancerProfile(
@@ -268,18 +189,18 @@ export async function getFreelancerProfile(
   clerkUserId: string,
 ): Promise<FreelancerProfile | null> {
   const { data: profile, error } = await supabase
-    .from('freelancer_profiles')
+    .from('profiles')
     .select('*')
-    .eq(profileId ? 'user_id' : 'clerk_user_id', profileId ?? clerkUserId)
+    .eq('clerk_user_id', clerkUserId)
+    .eq('role', 'freelancer')
     .single();
 
   if (error) {
     if (error.code === 'PGRST116') {
-      // No rows returned
       return null;
     }
     throw new Error(`Failed to get freelancer profile: ${error.message}`);
   }
 
-  return profile;
+  return profile as any;
 }

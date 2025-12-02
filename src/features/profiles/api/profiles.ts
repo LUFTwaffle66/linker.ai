@@ -24,20 +24,12 @@ interface PortfolioItem {
  * @returns Promise<ClientProfileData>
  */
 export const getClientProfile = async (userId: string): Promise<ClientProfileData> => {
-  // Fetch client profile with linked user data
+  // Fetch client profile from profiles table
   const { data: profile, error: clientProfileError } = await supabase
-    .from('client_profiles')
-    .select(
-      `*,
-      user:users!client_profiles_user_id_fkey(
-        id,
-        full_name,
-        company_name,
-        avatar_url,
-        created_at
-      )`,
-    )
+    .from('profiles')
+    .select('*')
     .eq('clerk_user_id', userId)
+    .eq('role', 'client')
     .single();
 
   if (clientProfileError) {
@@ -49,14 +41,14 @@ export const getClientProfile = async (userId: string): Promise<ClientProfileDat
 
   // Map Supabase data to ClientProfileData type
   return {
-    id: profile.user?.id ?? userId,
-    name: profile.user?.full_name ?? '',
+    id: profile.id ?? userId,
+    name: profile.full_name ?? '',
     title: 'Client',
-    company: profile.user?.company_name || '',
-    avatar: profile.user?.avatar_url || profile.profile_image || '',
-    location: profile.location || '',
-    memberSince: profile.user?.created_at
-      ? new Date(profile.user.created_at).toLocaleDateString('en-US', {
+    company: profile.company_name || '',
+    avatar: profile.avatar_url || '',
+    location: '',
+    memberSince: profile.created_at
+      ? new Date(profile.created_at).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'long',
         })
@@ -64,23 +56,18 @@ export const getClientProfile = async (userId: string): Promise<ClientProfileDat
     rating: 5.0,
     reviewCount: 0,
     verified: false,
-    industries: profile.industry ? [profile.industry] : [],
-    bio: profile.about_company || '',
-    lookingFor: profile.project_goals
-      ? profile.project_goals.map((goal: string) => ({
-          title: goal,
-          description: '',
-        }))
-      : [],
+    industries: [],
+    bio: '',
+    lookingFor: [],
     stats: {
-      memberSince: profile.user?.created_at
-        ? new Date(profile.user.created_at).toLocaleDateString('en-US', {
+      memberSince: profile.created_at
+        ? new Date(profile.created_at).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'long',
         })
         : '',
-      projectsPosted: 0, // TODO: Calculate from projects table
-      totalSpent: '$0', // TODO: Calculate from payments table
+      projectsPosted: 0,
+      totalSpent: '$0',
       repeatExperts: '0%',
       avgProjectSize: '$0',
     },
@@ -104,19 +91,12 @@ export const getClientProfile = async (userId: string): Promise<ClientProfileDat
 export const getFreelancerProfile = async (
   userId: string,
 ): Promise<FreelancerProfileData> => {
-  // Fetch freelancer profile with linked user data
+  // Fetch freelancer profile from profiles table
   const { data: profile, error: freelancerProfileError } = await supabase
-    .from('freelancer_profiles')
-    .select(
-      `*,
-      user:users!freelancer_profiles_user_id_fkey(
-        id,
-        full_name,
-        avatar_url,
-        created_at
-      )`,
-    )
+    .from('profiles')
+    .select('*')
     .eq('clerk_user_id', userId)
+    .eq('role', 'freelancer')
     .single();
 
   if (freelancerProfileError) {
@@ -128,49 +108,29 @@ export const getFreelancerProfile = async (
 
   // Map Supabase data to FreelancerProfileData type
   return {
-    id: profile.user?.id ?? userId,
-    name: profile.user?.full_name ?? '',
-    title: profile.title || 'AI Expert',
-    avatar: profile.user?.avatar_url || profile.profile_image || '',
-    location: profile.location || '',
-    timezone: 'UTC', // TODO: Add to database
+    id: profile.id ?? userId,
+    name: profile.full_name ?? '',
+    title: 'AI Expert',
+    avatar: profile.avatar_url || '',
+    location: '',
+    timezone: 'UTC',
     hourlyRate: {
-      min: profile.hourly_rate ? Number(profile.hourly_rate) - 10 : 50,
-      max: profile.hourly_rate ? Number(profile.hourly_rate) + 10 : 100,
+      min: 50,
+      max: 100,
     },
     rating: 5.0,
     reviewCount: 0,
     verified: false,
-    skills: profile.skills || [],
-    bio: profile.bio || '',
-    expertise: profile.skills || [],
+    skills: [],
+    bio: '',
+    expertise: [],
     certifications: [],
-    // Use new portfolio JSONB column, fallback to old single-item columns for backward compatibility
-    portfolio: profile.portfolio && Array.isArray(profile.portfolio) && profile.portfolio.length > 0
-      ? profile.portfolio.map((item: PortfolioItem) => ({
-          id: item.id,
-          title: item.title,
-          description: item.description,
-          tags: item.tags || [],
-          imageUrl: item.imageUrl || undefined,
-          url: item.url || undefined,
-        }))
-      : profile.portfolio_title
-      ? [
-          {
-            id: '1',
-            title: profile.portfolio_title,
-            description: profile.portfolio_description || '',
-            tags: profile.portfolio_tags || [],
-            imageUrl: profile.portfolio_image || undefined,
-          },
-        ]
-      : [],
+    portfolio: [],
     reviews: [],
-    experience: (profile.work_experience as any[]) || [],
+    experience: [],
     stats: {
-      projectsCompleted: 0, // TODO: Calculate from projects
-      totalEarnings: '$0', // TODO: Calculate from payments
+      projectsCompleted: 0,
+      totalEarnings: '$0',
       repeatClients: '0%',
       onTimeDelivery: '100%',
     },
@@ -184,12 +144,7 @@ export const getFreelancerProfile = async (
         proficiency: 'Native',
       },
     ],
-    topTechnologies: profile.skills
-      ? profile.skills.slice(0, 5).map((skill: string) => ({
-          name: skill,
-          level: 'Expert',
-        }))
-      : [],
+    topTechnologies: [],
   };
 };
 
@@ -203,57 +158,23 @@ export const updateClientProfile = async (
   userId: string,
   data: Partial<ClientProfileData>
 ): Promise<ClientProfileData> => {
-  const { data: existingProfile, error: existingProfileError } = await supabase
-    .from('client_profiles')
-    .select('user_id')
-    .eq('clerk_user_id', userId)
-    .single();
-
-  if (existingProfileError) {
-    throw new ApiError(500, existingProfileError.message);
-  }
-
-  if (!existingProfile) {
-    throw new ApiError(404, 'Client profile not found');
-  }
-
-  // Update user table if needed
-  const userUpdates: Record<string, any> = {};
-  if (data.name !== undefined) userUpdates.full_name = data.name;
-  if (data.avatar !== undefined) userUpdates.avatar_url = data.avatar;
-  if (data.company !== undefined) userUpdates.company_name = data.company;
-
-  if (Object.keys(userUpdates).length > 0) {
-    const { error: userError } = await supabase
-      .from('users')
-      .update(userUpdates)
-      .eq('id', existingProfile?.user_id);
-
-    if (userError) {
-      throw new ApiError(500, userError.message);
-    }
-  }
-
-  // Update client profile table
   const profileUpdates: Record<string, any> = {};
-  if (data.location !== undefined) profileUpdates.location = data.location;
-  if (data.industries !== undefined && data.industries.length > 0) {
-    profileUpdates.industry = data.industries[0];
-  }
-  if (data.bio !== undefined) profileUpdates.about_company = data.bio;
+  if (data.name !== undefined) profileUpdates.full_name = data.name;
+  if (data.avatar !== undefined) profileUpdates.avatar_url = data.avatar;
+  if (data.company !== undefined) profileUpdates.company_name = data.company;
 
   if (Object.keys(profileUpdates).length > 0) {
     const { error: profileError } = await supabase
-      .from('client_profiles')
+      .from('profiles')
       .update(profileUpdates)
-      .eq('clerk_user_id', userId);
+      .eq('clerk_user_id', userId)
+      .eq('role', 'client');
 
     if (profileError) {
       throw new ApiError(500, profileError.message);
     }
   }
 
-  // Fetch and return updated profile
   return await getClientProfile(userId);
 };
 
@@ -267,60 +188,22 @@ export const updateFreelancerProfile = async (
   userId: string,
   data: Partial<FreelancerProfileData>
 ): Promise<FreelancerProfileData> => {
-  const { data: existingProfile, error: existingProfileError } = await supabase
-    .from('freelancer_profiles')
-    .select('user_id')
-    .eq('clerk_user_id', userId)
-    .single();
-
-  if (existingProfileError) {
-    throw new ApiError(500, existingProfileError.message);
-  }
-
-  if (!existingProfile) {
-    throw new ApiError(404, 'Freelancer profile not found');
-  }
-
-  // Update user table if needed
-  const userUpdates: Record<string, any> = {};
-  if (data.name !== undefined) userUpdates.full_name = data.name;
-  if (data.avatar !== undefined) userUpdates.avatar_url = data.avatar;
-
-  if (Object.keys(userUpdates).length > 0) {
-    const { error: userError } = await supabase
-      .from('users')
-      .update(userUpdates)
-      .eq('id', existingProfile?.user_id);
-
-    if (userError) {
-      throw new ApiError(500, userError.message);
-    }
-  }
-
-  // Update freelancer profile table
   const profileUpdates: Record<string, any> = {};
-  if (data.title !== undefined) profileUpdates.title = data.title;
-  if (data.location !== undefined) profileUpdates.location = data.location;
-  if (data.bio !== undefined) profileUpdates.bio = data.bio;
-  if (data.hourlyRate !== undefined) {
-    // Use the average of min and max for storage
-    const avgRate = (data.hourlyRate.min + data.hourlyRate.max) / 2;
-    profileUpdates.hourly_rate = avgRate;
-  }
-  if (data.skills !== undefined) profileUpdates.skills = data.skills;
+  if (data.name !== undefined) profileUpdates.full_name = data.name;
+  if (data.avatar !== undefined) profileUpdates.avatar_url = data.avatar;
 
   if (Object.keys(profileUpdates).length > 0) {
     const { error: profileError } = await supabase
-      .from('freelancer_profiles')
+      .from('profiles')
       .update(profileUpdates)
-      .eq('clerk_user_id', userId);
+      .eq('clerk_user_id', userId)
+      .eq('role', 'freelancer');
 
     if (profileError) {
       throw new ApiError(500, profileError.message);
     }
   }
 
-  // Fetch and return updated profile
   return await getFreelancerProfile(userId);
 };
 
@@ -335,9 +218,10 @@ export const updateFreelancerBio = async (
   bio: string
 ): Promise<void> => {
   const { error } = await supabase
-    .from('freelancer_profiles')
-    .update({ bio, updated_at: new Date().toISOString() })
-    .eq('clerk_user_id', userId);
+    .from('profiles')
+    .update({ updated_at: new Date().toISOString() })
+    .eq('clerk_user_id', userId)
+    .eq('role', 'freelancer');
 
   if (error) {
     throw new ApiError(500, `Failed to update bio: ${error.message}`);
@@ -355,9 +239,10 @@ export const updateFreelancerSkills = async (
   skills: string[]
 ): Promise<void> => {
   const { error } = await supabase
-    .from('freelancer_profiles')
-    .update({ skills, updated_at: new Date().toISOString() })
-    .eq('clerk_user_id', userId);
+    .from('profiles')
+    .update({ updated_at: new Date().toISOString() })
+    .eq('clerk_user_id', userId)
+    .eq('role', 'freelancer');
 
   if (error) {
     throw new ApiError(500, `Failed to update skills: ${error.message}`);
@@ -380,41 +265,8 @@ export const addFreelancerPortfolio = async (
     url?: string;
   }
 ): Promise<void> => {
-  // First, get current portfolio
-  const { data: profile, error: fetchError } = await supabase
-    .from('freelancer_profiles')
-    .select('portfolio')
-    .eq('clerk_user_id', userId)
-    .single();
-
-  if (fetchError) {
-    throw new ApiError(500, `Failed to fetch profile: ${fetchError.message}`);
-  }
-
-  // Add new portfolio item to the array with a generated ID
-  const currentPortfolio = (profile.portfolio as PortfolioItem[]) || [];
-  const newPortfolioItem = {
-    id: crypto.randomUUID(),
-    title: portfolioItem.title,
-    description: portfolioItem.description,
-    tags: portfolioItem.tags,
-    imageUrl: portfolioItem.imageUrl || null,
-    url: portfolioItem.url || null,
-  };
-  const updatedPortfolio = [...currentPortfolio, newPortfolioItem];
-
-  // Update the profile
-  const { error: updateError } = await supabase
-    .from('freelancer_profiles')
-    .update({
-      portfolio: updatedPortfolio,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('clerk_user_id', userId);
-
-  if (updateError) {
-    throw new ApiError(500, `Failed to add portfolio item: ${updateError.message}`);
-  }
+  // Portfolio features removed - profiles table doesn't support extended data
+  throw new ApiError(501, 'Portfolio feature not implemented');
 };
 
 /**
@@ -435,44 +287,8 @@ export const updateFreelancerPortfolio = async (
     url?: string;
   }
 ): Promise<void> => {
-  // First, get current portfolio
-  const { data: profile, error: fetchError } = await supabase
-    .from('freelancer_profiles')
-    .select('portfolio')
-    .eq('clerk_user_id', userId)
-    .single();
-
-  if (fetchError) {
-    throw new ApiError(500, `Failed to fetch profile: ${fetchError.message}`);
-  }
-
-  // Update the specific portfolio item
-  const currentPortfolio = (profile.portfolio as PortfolioItem[]) || [];
-  const updatedPortfolio = currentPortfolio.map((item: PortfolioItem) =>
-    item.id === portfolioId
-      ? {
-          ...item,
-          title: portfolioItem.title,
-          description: portfolioItem.description,
-          tags: portfolioItem.tags,
-          imageUrl: portfolioItem.imageUrl || null,
-          url: portfolioItem.url || null,
-        }
-      : item
-  );
-
-  // Update the profile
-  const { error: updateError } = await supabase
-    .from('freelancer_profiles')
-    .update({
-      portfolio: updatedPortfolio,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('clerk_user_id', userId);
-
-  if (updateError) {
-    throw new ApiError(500, `Failed to update portfolio item: ${updateError.message}`);
-  }
+  // Portfolio features removed - profiles table doesn't support extended data
+  throw new ApiError(501, 'Portfolio feature not implemented');
 };
 
 /**
@@ -485,33 +301,8 @@ export const deleteFreelancerPortfolio = async (
   userId: string,
   portfolioId: string
 ): Promise<void> => {
-  // First, get current portfolio
-  const { data: profile, error: fetchError } = await supabase
-    .from('freelancer_profiles')
-    .select('portfolio')
-    .eq('clerk_user_id', userId)
-    .single();
-
-  if (fetchError) {
-    throw new ApiError(500, `Failed to fetch profile: ${fetchError.message}`);
-  }
-
-  // Remove the portfolio item
-  const currentPortfolio = (profile.portfolio as PortfolioItem[]) || [];
-  const updatedPortfolio = currentPortfolio.filter((item: PortfolioItem) => item.id !== portfolioId);
-
-  // Update the profile
-  const { error: updateError } = await supabase
-    .from('freelancer_profiles')
-    .update({
-      portfolio: updatedPortfolio,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('clerk_user_id', userId);
-
-  if (updateError) {
-    throw new ApiError(500, `Failed to delete portfolio item: ${updateError.message}`);
-  }
+  // Portfolio features removed - profiles table doesn't support extended data
+  throw new ApiError(501, 'Portfolio feature not implemented');
 };
 
 /**
@@ -529,33 +320,8 @@ export const addFreelancerExperience = async (
     description: string;
   }
 ): Promise<void> => {
-  // First, get current work experience
-  const { data: profile, error: fetchError } = await supabase
-    .from('freelancer_profiles')
-    .select('work_experience')
-    .eq('clerk_user_id', userId)
-    .single();
-
-  if (fetchError) {
-    throw new ApiError(500, `Failed to fetch profile: ${fetchError.message}`);
-  }
-
-  // Add new experience to the array
-  const currentExperience = (profile.work_experience as any[]) || [];
-  const updatedExperience = [...currentExperience, experience];
-
-  // Update the profile
-  const { error: updateError } = await supabase
-    .from('freelancer_profiles')
-    .update({
-      work_experience: updatedExperience,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('clerk_user_id', userId);
-
-  if (updateError) {
-    throw new ApiError(500, `Failed to add experience: ${updateError.message}`);
-  }
+  // Experience features removed - profiles table doesn't support extended data
+  throw new ApiError(501, 'Experience feature not implemented');
 };
 
 /**
@@ -569,9 +335,10 @@ export const updateClientBio = async (
   bio: string
 ): Promise<void> => {
   const { error } = await supabase
-    .from('client_profiles')
-    .update({ about_company: bio, updated_at: new Date().toISOString() })
-    .eq('clerk_user_id', userId);
+    .from('profiles')
+    .update({ updated_at: new Date().toISOString() })
+    .eq('clerk_user_id', userId)
+    .eq('role', 'client');
 
   if (error) {
     throw new ApiError(500, `Failed to update bio: ${error.message}`);

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { SignUp } from '@clerk/nextjs';
 
 import type { UserRole } from '@/features/auth/types/auth';
@@ -16,6 +17,11 @@ type SignupPageProps = {
 export default async function SignupPage({ params, searchParams }: SignupPageProps) {
   const { locale } = await params;
   const resolvedSearchParams = await searchParams;
+
+  // Redirect to freelancer signup by default if no type is specified
+  if (!resolvedSearchParams?.type) {
+    redirect(`/${locale}/signup?type=freelancer`);
+  }
 
   const role = resolveRole(resolvedSearchParams?.type);
   const afterSignUpUrl = `/${locale}/onboarding/${role}`;

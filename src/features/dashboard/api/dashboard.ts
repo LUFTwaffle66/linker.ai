@@ -22,13 +22,6 @@ type DashboardProposal = Proposal & {
  * Fetch freelancer dashboard data
  */
 export async function getFreelancerDashboard(userId: string): Promise<FreelancerDashboardData> {
-  // Fetch freelancer profile
-  const { data: profile } = await supabase
-    .from('freelancer_profiles')
-    .select('*')
-    .eq('clerk_user_id', userId)
-    .single();
-
   // Fetch proposals
   const { data: proposals } = await supabase
     .from('proposals')
@@ -101,13 +94,6 @@ export async function getFreelancerDashboard(userId: string): Promise<Freelancer
  * Fetch client dashboard data
  */
 export async function getClientDashboard(userId: string): Promise<ClientDashboardData> {
-  // Fetch client profile
-  const { data: profile } = await supabase
-    .from('client_profiles')
-    .select('*')
-    .eq('clerk_user_id', userId)
-    .single();
-
   // Fetch projects
   const { data: projects } = await supabase
     .from('projects')
@@ -115,7 +101,12 @@ export async function getClientDashboard(userId: string): Promise<ClientDashboar
       *,
       proposals:proposals(
         *,
-        freelancer:users!freelancer_id(*)
+        freelancer:profiles!proposals_freelancer_id_fkey(
+          id,
+          clerk_user_id,
+          full_name,
+          avatar_url
+        )
       )
     `)
     .eq('client_id', userId)
