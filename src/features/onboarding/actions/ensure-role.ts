@@ -12,17 +12,25 @@ export async function ensureUserRole(role: UserRole) {
   }
 
   const user = await currentUser();
-  const existingRole = (user?.publicMetadata?.role as UserRole | undefined) ?? null;
 
-  if (existingRole && existingRole !== role) {
-    return { success: false, error: 'role_mismatch', role: existingRole } as const;
+  if (!user) {
+    return { success: false, error: 'Unauthorized' } as const;
   }
 
-  if (!existingRole) {
+  const existingRole =
+    (user.publicMetadata?.role as UserRole | undefined) ??
+    (user.unsafeMetadata?.role as UserRole | undefined) ??
+    null;
+
+  if (existingRole !== role) {
     try {
       await clerkClient.users.updateUserMetadata(userId, {
         publicMetadata: {
-          ...(user?.publicMetadata ?? {}),
+          ...(user.publicMetadata ?? {}),
+          role,
+        },
+        unsafeMetadata: {
+          ...(user.unsafeMetadata ?? {}),
           role,
         },
       });
@@ -33,10 +41,16 @@ export async function ensureUserRole(role: UserRole) {
   }
 
   try {
-    await updateProfileByClerkId(userId, { role: existingRole ?? role });
+    const { data, error } = await updateProfileByClerkId(userId, { role });
+
+    if (error || !data) {
+      console.error('Failed to sync profile role to Supabase', error);
+      return { success: false, error: 'Failed to sync profile role' } as const;
+    }
   } catch (error) {
     console.error('Failed to sync profile role to Supabase', error);
+    return { success: false, error: 'Failed to sync profile role' } as const;
   }
 
-  return { success: true, role: existingRole ?? role } as const;
+  return { success: true, role } as const;
 }
