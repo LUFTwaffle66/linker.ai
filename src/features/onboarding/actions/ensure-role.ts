@@ -41,16 +41,22 @@ export async function ensureUserRole(role: UserRole) {
     }
   }
 
-  try {
-    const { data, error } = await updateProfileByClerkId(userId, { role });
+  const { data, error } = await updateProfileByClerkId(userId, { role });
 
-    if (error || !data) {
-      console.error('Failed to sync profile role to Supabase', error);
-      return { success: false, error: 'Failed to sync profile role' } as const;
-    }
-  } catch (error) {
-    console.error('Failed to sync profile role to Supabase', error);
-    return { success: false, error: 'Failed to sync profile role' } as const;
+  if (error) {
+    console.error('Failed to sync profile role to Supabase:', error);
+    return {
+      success: false,
+      error: `Database sync failed: ${error.message || 'Unknown error'}`
+    } as const;
+  }
+
+  if (!data) {
+    console.error('Profile not found in database for user:', userId);
+    return {
+      success: false,
+      error: 'Profile not found. Please complete signup first.'
+    } as const;
   }
 
   return { success: true, role } as const;

@@ -52,15 +52,32 @@ export async function POST(req: Request) {
   if (eventType === 'user.created' || eventType === 'user.updated') {
     const clerkUserId = evt.data.id;
 
-    const { error } = await upsertProfileFromClerk(clerkUserId, evt.data as any);
+    const { profile, error } = await upsertProfileFromClerk(clerkUserId, evt.data as any);
 
     if (error) {
-      console.error('Error syncing profile from webhook:', error);
-
-      return new Response('Error: Failed to sync profile', {
-        status: 500,
+      console.error(`Error syncing profile from webhook (${eventType}):`, {
+        clerkUserId,
+        error: error.message || error,
+        code: error.code,
       });
+
+      return new Response(
+        JSON.stringify({
+          error: 'Failed to sync profile',
+          details: error.message || 'Unknown error',
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     }
+
+    console.log(`Successfully synced profile for ${eventType}:`, {
+      clerkUserId,
+      profileId: profile?.id,
+      role: profile?.role,
+    });
   }
 
   if (eventType === 'user.deleted') {

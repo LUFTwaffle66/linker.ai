@@ -61,34 +61,17 @@ function buildProfilePayload(clerkUserId: string, clerkUser: ClerkProfileSource 
 }
 
 async function findProfileByClerkId(clerkUserId: string) {
-  const { data: freelancerProfile, error: freelancerError } = await supabaseAdmin
-    .from('freelancer_profiles')
-    .select('id, user_id, clerk_user_id')
+  const { data: profile, error } = await supabaseAdmin
+    .from('profiles')
+    .select('id, clerk_user_id, email, full_name, avatar_url, role, company_name')
     .eq('clerk_user_id', clerkUserId)
     .maybeSingle();
 
-  if (freelancerProfile) {
-    return { profile: freelancerProfile, table: 'freelancer_profiles' as const, error: null };
+  if (error && error.code !== 'PGRST116') {
+    return { profile: null, error };
   }
 
-  const { data: clientProfile, error: clientError } = await supabaseAdmin
-    .from('client_profiles')
-    .select('id, user_id, clerk_user_id')
-    .eq('clerk_user_id', clerkUserId)
-    .maybeSingle();
-
-  if (clientProfile) {
-    return { profile: clientProfile, table: 'client_profiles' as const, error: null };
-  }
-
-  const firstError =
-    freelancerError && freelancerError.code !== 'PGRST116'
-      ? freelancerError
-      : clientError && clientError.code !== 'PGRST116'
-        ? clientError
-        : null;
-
-  return { profile: null, table: null, error: firstError } as const;
+  return { profile, error: null };
 }
 
 export async function upsertProfileFromClerk(
@@ -99,73 +82,62 @@ export async function upsertProfileFromClerk(
   const lookupResult = await findProfileByClerkId(clerkUserId);
 
   if (lookupResult.error) {
-    return { profile: profileData as BaseProfile, error: lookupResult.error };
+    return { profile: null, error: lookupResult.error };
   }
 
-  return {
-    profile: lookupResult.profile
-      ? ({
-          id: lookupResult.profile.id,
-          clerk_user_id: clerkUserId,
-          email: profileData.email ?? null,
-          full_name: profileData.full_name ?? null,
-          avatar_url: profileData.avatar_url ?? null,
-          role: profileData.role ?? null,
-          company_name: profileData.company_name ?? null,
-        } satisfies BaseProfile)
-      : ({ id: clerkUserId, ...profileData } satisfies BaseProfile),
-    error: null,
-  };
+  if (lookupResult.profile) {
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .update({
+        email: profileData.email,
+        full_name: profileData.full_name,
+        avatar_url: profileData.avatar_url,
+        role: profileData.role,
+        company_name: profileData.company_name,
+      })
+      .eq('clerk_user_id', clerkUserId)
+      .select('id, clerk_user_id, email, full_name, avatar_url, role, company_name')
+      .single();
+
+    return { profile: data, error };
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('profiles')
+    .insert({
+      clerk_user_id: clerkUserId,
+      email: profileData.email,
+      full_name: profileData.full_name,
+      avatar_url: profileData.avatar_url,
+      role: profileData.role,
+      company_name: profileData.company_name,
+    })
+    .select('id, clerk_user_id, email, full_name, avatar_url, role, company_name')
+    .single();
+
+  return { profile: data, error };
 }
 
 export async function fetchProfileByClerkId(clerkUserId: string) {
-  const lookupResult = await findProfileByClerkId(clerkUserId);
-
-  if (!lookupResult.profile) {
-    return { data: null, error: lookupResult.error };
-  }
-
-  const { data: user, error } = await supabaseAdmin
-    .from('users')
-    .select('id, email, full_name, avatar_url, role, company_name')
-    .eq('id', lookupResult.profile.user_id)
+  const { data, error } = await supabaseAdmin
+    .from('profiles')
+    .select('id, clerk_user_id, email, full_name, avatar_url, role, company_name')
+    .eq('clerk_user_id', clerkUserId)
     .maybeSingle();
 
-  return {
-    data: user
-      ? ({
-          ...user,
-          clerk_user_id: clerkUserId,
-        } satisfies BaseProfile)
-      : null,
-    error,
-  };
+  return { data, error };
 }
 
 export async function updateProfileByClerkId(
   clerkUserId: string,
   updates: Record<string, unknown>,
 ) {
-  const lookupResult = await findProfileByClerkId(clerkUserId);
-
-  if (!lookupResult.profile) {
-    return { data: null, error: lookupResult.error };
-  }
-
   const { data, error } = await supabaseAdmin
-    .from('users')
+    .from('profiles')
     .update(updates)
-    .eq('id', lookupResult.profile.user_id)
-    .select('id, email, full_name, avatar_url, role, company_name')
+    .eq('clerk_user_id', clerkUserId)
+    .select('id, clerk_user_id, email, full_name, avatar_url, role, company_name')
     .single();
 
-  return {
-    data: data
-      ? ({
-          ...data,
-          clerk_user_id: clerkUserId,
-        } satisfies BaseProfile)
-      : null,
-    error,
-  };
+  return { data, error };
 }
