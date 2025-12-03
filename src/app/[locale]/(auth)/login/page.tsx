@@ -10,7 +10,11 @@ export default async function LoginPage({ params }: LoginPageProps) {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-950">
-      <SignIn routing="hash" afterSignInUrl={`/${locale}/dashboard`} />
+      <SignIn
+        routing="hash"
+        forceRedirectUrl={`/${locale}/dashboard`}
+        signUpUrl={`/${locale}/signup`}
+      />
     </div>
   );
 }
