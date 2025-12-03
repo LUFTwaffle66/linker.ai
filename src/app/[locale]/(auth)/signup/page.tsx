@@ -1,3 +1,4 @@
+// src/app/[locale]/(auth)/signup/page.tsx
 import { SignUp } from '@clerk/nextjs';
 import type { UserRole } from '@/features/auth/types/auth';
 import { RoleSelection } from '@/features/auth/components/role-selection';
@@ -13,6 +14,7 @@ type SignupPageProps = {
 };
 
 export default async function SignupPage({ params, searchParams }: SignupPageProps) {
+  // Await both params to avoid the sync access error
   const { locale } = await params;
   const resolvedSearchParams = await searchParams;
 
@@ -40,7 +42,7 @@ export default async function SignupPage({ params, searchParams }: SignupPagePro
         <div className="rounded-xl bg-white p-6 shadow-xl">
           <SignUp
             routing="hash"
-            forceRedirectUrl={afterSignUpUrl}
+            afterSignUpUrl={afterSignUpUrl}
             signInUrl={`/${locale}/login`}
             unsafeMetadata={{ role }}
             appearance={{
