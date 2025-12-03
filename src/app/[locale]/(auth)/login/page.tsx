@@ -1,4 +1,4 @@
-// src/app/[locale]/(auth)/login/page.tsx
+//src/app/[locale]/(auth)/login/page.tsx
 import { SignIn } from '@clerk/nextjs';
 
 type LoginPageProps = {
@@ -12,7 +12,7 @@ export default async function LoginPage({ params }: LoginPageProps) {
     <div className="flex min-h-screen items-center justify-center bg-slate-950">
       <SignIn
         routing="hash"
-        forceRedirectUrl={`/${locale}/dashboard`}
+        afterSignInUrl={`/${locale}/dashboard`}
         signUpUrl={`/${locale}/signup`}
       />
     </div>
